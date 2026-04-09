@@ -1,39 +1,104 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
     
-    // Helper functions
-    function isSignedIn() {
+    function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    function isResourceOwner() {
-      return isSignedIn() && resource.data.userId == request.auth.uid;
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User profiles
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "christianrwemera4@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Validation Functions
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 100 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.university is string && data.university.size() > 0 &&
+             data.faculty is string && data.faculty.size() > 0 &&
+             data.promotion is string && data.promotion.size() > 0 &&
+             data.credits is number && data.credits >= 0 &&
+             data.role in ['user', 'admin'];
+    }
+
+    function isValidDocument(data) {
+      return data.userId is string &&
+             data.course is string && data.course.size() > 0 &&
+             data.professor is string && data.professor.size() > 0 &&
+             data.content is string && data.content.size() > 0 &&
+             data.serviceType in ['simple', 'nb', 'color'] &&
+             data.hasCoverPage is bool &&
+             data.hasBinding is bool &&
+             data.pageCount is number &&
+             data.price is number && data.price >= 0 &&
+             data.isPaid is bool &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      // Users can read only their own profile (PII protection)
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Creation: must be the owner, role must be 'user' (unless admin), credits must start at 0 (unless admin)
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.role == 'user' || isAdmin()) &&
+                    (request.resource.data.credits == 0 || isAdmin());
+      
+      // Update: owner can update profile but NOT credits or role (unless admin)
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && 
+                        request.resource.data.credits == resource.data.credits &&
+                        request.resource.data.role == resource.data.role) || 
+                    isAdmin();
     }
 
-    // Documents root collection
     match /documents/{docId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Users can read only their own documents
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Create: must set own userId
+      allow create: if isAuthenticated() && isValidDocument(request.resource.data) && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Update: only allow updating isPaid status if credits are being deducted (handled by app logic, but rules protect userId/content)
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) &&
+                    isValidDocument(request.resource.data) &&
+                    request.resource.data.userId == resource.data.userId;
     }
 
-    // Transactions root collection
     match /transactions/{transId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin(); // Only admin can record transactions for now (manual recharge)
     }
 
     // Default deny
-    match /{document=**} {
+    match /{path=**} {
       allow read, write: if false;
     }
   }
