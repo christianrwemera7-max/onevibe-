@@ -4,7 +4,8 @@ import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'CyberDoc - Intelligent Academic Formatting',
-  description: 'The smart platform for academic document formatting and printing, powered by Google AI Studio.',
+  description: 'Transform text into professional PDFs with custom cover pages and credit-based payments.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
