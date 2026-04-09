@@ -53,7 +53,7 @@ import { intelligentFormattingAssistant, type IntelligentFormattingAssistantOutp
 // --- Types ---
 
 interface UserProfile {
-  id: string;
+  uid: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -65,10 +65,10 @@ interface UserProfile {
 }
 
 interface DocSettings {
-  font: 'Times New Roman' | 'Arial' | 'Calibri';
-  fontSize: 11 | 12;
-  lineHeight: '1' | '1.5' | '2';
-  margins: 'normal' | 'reduced';
+  font: string;
+  fontSize: number;
+  lineHeight: string;
+  margins: string;
 }
 
 interface DocumentData {
@@ -136,11 +136,12 @@ export default function App() {
   }, [db, user]);
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-  // Documents data
+  // Documents data - Root collection with filter
   const docsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
-      collection(db, 'users', user.uid, 'documents'),
+      collection(db, 'documents'),
+      where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
   }, [db, user]);
@@ -167,7 +168,7 @@ export default function App() {
     e.preventDefault();
     if (!user || !db) return;
     const newProfile: UserProfile = {
-      id: user.uid,
+      uid: user.uid,
       firstName: regData.firstName,
       lastName: regData.lastName,
       email: user.email || '',
@@ -246,7 +247,19 @@ function RechargeModal({ profile, onClose, currency }: { profile: UserProfile | 
     if (!profile || !db) return;
     setIsProcessing(true);
     const newCredits = profile.credits + amount;
-    updateDocumentNonBlocking(doc(db, 'users', profile.id), { credits: newCredits });
+    
+    // Update user balance
+    updateDocumentNonBlocking(doc(db, 'users', profile.uid), { credits: newCredits });
+    
+    // Log transaction
+    addDocumentNonBlocking(collection(db, 'transactions'), {
+      userId: profile.uid,
+      amount: amount,
+      type: 'recharge',
+      description: `Recharge de ${formatCurrency(amount, 'FC')}`,
+      timestamp: serverTimestamp()
+    });
+
     setIsProcessing(false);
     onClose();
   };
@@ -728,8 +741,8 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
         return;
       }
 
-      const docData: DocumentData = {
-        userId: profile.id,
+      const docData: Omit<DocumentData, 'id'> = {
+        userId: profile.uid,
         course: formData.course,
         professor: formData.professor,
         title: formData.title,
@@ -744,12 +757,23 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
         createdAt: serverTimestamp()
       };
 
-      addDocumentNonBlocking(collection(db, 'users', profile.id, 'documents'), docData);
+      addDocumentNonBlocking(collection(db, 'documents'), docData);
 
       if (isPaid) {
-        updateDocumentNonBlocking(doc(db, 'users', profile.id), {
+        // Deduct credits
+        updateDocumentNonBlocking(doc(db, 'users', profile.uid), {
           credits: profile.credits - price
         });
+        
+        // Log transaction
+        addDocumentNonBlocking(collection(db, 'transactions'), {
+          userId: profile.uid,
+          amount: price,
+          type: 'payment',
+          description: `Paiement document: ${formData.course}`,
+          timestamp: serverTimestamp()
+        });
+
         setTimeout(() => {
           downloadPDF();
         }, 500);
