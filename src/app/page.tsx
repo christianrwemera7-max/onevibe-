@@ -1,29 +1,29 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  auth, db, OperationType, handleFirestoreError 
-} from '@/lib/firebase';
+  useUser, 
+  useFirestore, 
+  useAuth, 
+  useDoc, 
+  useCollection, 
+  useMemoFirebase,
+  setDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  addDocumentNonBlocking
+} from '@/firebase';
 import { 
-  onAuthStateChanged, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signOut,
-  User
+  signOut 
 } from 'firebase/auth';
 import { 
   doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
   collection, 
   query, 
   where, 
-  onSnapshot, 
-  addDoc, 
-  serverTimestamp,
-  orderBy
+  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 import { 
   FileText, 
@@ -53,7 +53,7 @@ import { intelligentFormattingAssistant, type IntelligentFormattingAssistantOutp
 // --- Types ---
 
 interface UserProfile {
-  uid: string;
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -117,63 +117,42 @@ const ErrorBoundary = ({ error, reset }: { error: string, reset: () => void }) =
 );
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
+  const auth = useAuth();
+  
   const [view, setView] = useState<'dashboard' | 'new' | 'history'>('dashboard');
-  const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [currency, setCurrency] = useState<'FC' | 'USD'>('FC');
   const [isRecharging, setIsRecharging] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+
   const [isRegistering, setIsRegistering] = useState(false);
   const [regData, setRegData] = useState({ firstName: '', lastName: '', university: '', faculty: '', promotion: '' });
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            setProfile(userDoc.data() as UserProfile);
-            setIsRegistering(false);
-          } else {
-            setIsRegistering(true);
-          }
-        } catch (err) {
-          handleFirestoreError(err, OperationType.GET, `users/${currentUser.uid}`);
-        }
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-    });
+  // Profile data
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+  const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user || isRegistering) return;
-
-    const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists()) setProfile(doc.data() as UserProfile);
-    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${user.uid}`));
-
-    const q = query(
-      collection(db, 'documents'), 
-      where('userId', '==', user.uid),
+  // Documents data
+  const docsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'documents'),
       orderBy('createdAt', 'desc')
     );
-    const unsubDocs = onSnapshot(q, (snapshot) => {
-      setDocuments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DocumentData)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'documents'));
+  }, [db, user]);
+  const { data: documents = [], isLoading: isDocsLoading } = useCollection<DocumentData>(docsQuery);
 
-    return () => {
-      unsubProfile();
-      unsubDocs();
-    };
-  }, [user, isRegistering]);
+  useEffect(() => {
+    if (user && !isProfileLoading && !profile) {
+      setIsRegistering(true);
+    } else {
+      setIsRegistering(false);
+    }
+  }, [user, profile, isProfileLoading]);
 
   const handleLogin = async () => {
     try {
@@ -186,28 +165,23 @@ export default function App() {
 
   const handleCompleteRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    try {
-      const newProfile: UserProfile = {
-        uid: user.uid,
-        firstName: regData.firstName,
-        lastName: regData.lastName,
-        email: user.email || '',
-        university: regData.university,
-        faculty: regData.faculty,
-        promotion: regData.promotion,
-        credits: 0,
-        role: 'user'
-      };
-      await setDoc(doc(db, 'users', user.uid), newProfile);
-      setProfile(newProfile);
-      setIsRegistering(false);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
-    }
+    if (!user || !db) return;
+    const newProfile: UserProfile = {
+      id: user.uid,
+      firstName: regData.firstName,
+      lastName: regData.lastName,
+      email: user.email || '',
+      university: regData.university,
+      faculty: regData.faculty,
+      promotion: regData.promotion,
+      credits: 0,
+      role: 'user'
+    };
+    setDocumentNonBlocking(doc(db, 'users', user.uid), newProfile, { merge: true });
+    setIsRegistering(false);
   };
 
-  if (loading) return <LoadingScreen />;
+  if (isUserLoading || isProfileLoading) return <LoadingScreen />;
   if (error) return <ErrorBoundary error={error} reset={() => setError(null)} />;
 
   if (!user) return <LoginView onLogin={handleLogin} />;
@@ -256,9 +230,6 @@ export default function App() {
             profile={profile} 
             onClose={() => setIsRecharging(false)} 
             currency={currency}
-            onSuccess={(newCredits) => {
-              if (profile) setProfile({ ...profile, credits: newCredits });
-            }}
           />
         )}
       </AnimatePresence>
@@ -266,23 +237,18 @@ export default function App() {
   );
 }
 
-function RechargeModal({ profile, onClose, currency, onSuccess }: { profile: UserProfile | null, onClose: () => void, currency: 'FC' | 'USD', onSuccess: (c: number) => void }) {
+function RechargeModal({ profile, onClose, currency }: { profile: UserProfile | null, onClose: () => void, currency: 'FC' | 'USD' }) {
+  const db = useFirestore();
   const [amount, setAmount] = useState(5000);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleRecharge = async () => {
-    if (!profile) return;
+    if (!profile || !db) return;
     setIsProcessing(true);
-    try {
-      const newCredits = profile.credits + amount;
-      await updateDoc(doc(db, 'users', profile.uid), { credits: newCredits });
-      onSuccess(newCredits);
-      onClose();
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${profile.uid}`);
-    } finally {
-      setIsProcessing(false);
-    }
+    const newCredits = profile.credits + amount;
+    updateDocumentNonBlocking(doc(db, 'users', profile.id), { credits: newCredits });
+    setIsProcessing(false);
+    onClose();
   };
 
   return (
@@ -683,6 +649,7 @@ function DocCard({ doc, currency }: { doc: DocumentData, currency: 'FC' | 'USD' 
 }
 
 function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserProfile | null, onBack: any, onSuccess: any, currency: 'FC' | 'USD' }) {
+  const db = useFirestore();
   const [step, setStep] = useState<'edit' | 'preview' | 'payment'>('edit');
   const [serviceType, setServiceType] = useState<'simple' | 'nb' | 'color'>('simple');
   const [hasCoverPage, setHasCoverPage] = useState(false);
@@ -749,7 +716,7 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
   };
 
   const handleSave = async (isPaid: boolean = false) => {
-    if (!profile) return;
+    if (!profile || !db) return;
     setIsProcessing(true);
     try {
       const price = calculatePrice();
@@ -762,7 +729,7 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
       }
 
       const docData: DocumentData = {
-        userId: profile.uid,
+        userId: profile.id,
         course: formData.course,
         professor: formData.professor,
         title: formData.title,
@@ -777,10 +744,10 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
         createdAt: serverTimestamp()
       };
 
-      await addDoc(collection(db, 'documents'), docData);
+      addDocumentNonBlocking(collection(db, 'users', profile.id, 'documents'), docData);
 
       if (isPaid) {
-        await updateDoc(doc(db, 'users', profile.uid), {
+        updateDocumentNonBlocking(doc(db, 'users', profile.id), {
           credits: profile.credits - price
         });
         setTimeout(() => {
@@ -790,7 +757,7 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
 
       onSuccess();
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, 'documents');
+      console.error("Save failed", err);
     } finally {
       setIsProcessing(false);
     }
@@ -1209,7 +1176,7 @@ function HistoryView({ documents, onBack, currency }: { documents: DocumentData[
                       </span>
                     </td>
                     <td className="px-8 py-6 text-sm text-slate-500">
-                      {new Date(doc.createdAt?.toDate()).toLocaleDateString()}
+                      {doc.createdAt?.toDate ? new Date(doc.createdAt.toDate()).toLocaleDateString() : 'En cours...'}
                     </td>
                     <td className="px-8 py-6">
                       <span className={cn(
