@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CYBERDOC SECURITY RULES
+     * 
+     * Core Philosophy:
+     * This ruleset enforces a strict ownership model where access is gated by the Firebase 
+     * Authentication UID. Data is organized hierarchically to ensure that users can only 
+     * access and manage their own academic documents and profile information.
+     * 
+     * Data Structure:
+     * - /users/{userId}: Root profile for each user, keyed by their Auth UID.
+     * - /users/{userId}/documents/{documentId}: Subcollection of academic documents owned by the user.
+     * 
+     * Key Security Decisions:
+     * 1. Authorization Independence: Document formatting settings are denormalized directly 
+     *    into the document objects. This avoids costly 'get()' lookups in security rules 
+     *    and ensures that rules remain performant and atomic.
+     * 2. Path-Based Ownership: The presence of '{userId}' in the document path is the 
+     *    primary source of truth for authorization.
+     * 3. Structural Segregation: All user data is private by default. There are no public 
+     *    listings or global access paths in this prototype.
+     * 4. Relational Integrity: On creation, we verify that internal 'id' or 'userId' fields 
+     *    match the path variables to prevent data being written into the wrong user's tree.
+     */
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks ownership and ensures the document actually exists for write/delete. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the UserProfile collection. Users can only manage their own profile.
+     * @path /users/{userId}
+     * @allow get: (get) if Auth UID matches {userId}
+     * @deny update: (update) if Auth UID does not match {userId}
+     * @principle Pattern 4 (Self-Creation) & Pattern 1 (Ownership).
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      
+      // On create: Ensure the document ID in data matches the path UID
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      
+      // On update: Ensure the user owns the record and the ID field is immutable
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for the Document subcollection. Users can only manage their own documents.
+       * @path /users/{userId}/documents/{documentId}
+       * @allow list: (list) if query is scoped to the user's own path
+       * @deny create: (create) if request.resource.data.userId != userId
+       * @principle Pattern 1 (Ownership) with relational integrity validation.
+       */
+      match /documents/{documentId} {
+        allow get, list: if isOwner(userId);
+        
+        // Relational Integrity: Force document.userId to match the parent path segment
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        
+        // Relational Integrity: Ensure userId cannot be changed to another user during updates
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    // Default deny for any paths not explicitly matched
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
