@@ -1,18 +1,22 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Source+Code+Pro:wght@400;500&display=swap');
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-headline: "Outfit", sans-serif;
+  --font-code: "Source Code Pro", monospace;
 
-  /* PRD Primary: #2563EB (215 90% 53%) */
+  /* PRD Primary: #2563EB */
   --color-primary: hsl(215 90% 53%);
   --color-primary-foreground: hsl(210 40% 98%);
 
-  /* PRD Background: #F2F6FA (215 20% 97%) */
+  /* PRD Background: #F2F6FA */
   --color-background: hsl(215 20% 97%);
   --color-foreground: hsl(222 47% 11%);
 
-  /* PRD Accent: #26ACC9 (185 70% 50%) */
+  /* PRD Accent: #26ACC9 */
   --color-accent: hsl(185 70% 50%);
   --color-accent-foreground: hsl(222 47% 11.2%);
 
@@ -51,8 +55,6 @@
     @apply font-display tracking-tight;
   }
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 .markdown-body table {
   @apply w-full border-collapse mb-4;
