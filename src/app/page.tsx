@@ -121,6 +121,7 @@ export default function App() {
   const db = useFirestore();
   const auth = useAuth();
   
+  const [isMounted, setIsMounted] = useState(false);
   const [view, setView] = useState<'dashboard' | 'new' | 'history'>('dashboard');
   const [currency, setCurrency] = useState<'FC' | 'USD'>('FC');
   const [isRecharging, setIsRecharging] = useState(false);
@@ -136,7 +137,7 @@ export default function App() {
   }, [db, user]);
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-  // Documents data - Root collection with filter
+  // Documents data
   const docsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -146,6 +147,10 @@ export default function App() {
     );
   }, [db, user]);
   const { data: documents = [], isLoading: isDocsLoading } = useCollection<DocumentData>(docsQuery);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user && !isProfileLoading && !profile) {
@@ -182,7 +187,7 @@ export default function App() {
     setIsRegistering(false);
   };
 
-  if (isUserLoading || isProfileLoading) return <LoadingScreen />;
+  if (!isMounted || isUserLoading || isProfileLoading) return <LoadingScreen />;
   if (error) return <ErrorBoundary error={error} reset={() => setError(null)} />;
 
   if (!user) return <LoginView onLogin={handleLogin} />;
@@ -198,7 +203,7 @@ export default function App() {
             <DashboardView 
               key="dashboard"
               profile={profile} 
-              documents={documents} 
+              documents={documents || []} 
               onNew={() => setView('new')} 
               onHistory={() => setView('history')}
               currency={currency}
@@ -217,7 +222,7 @@ export default function App() {
           {view === 'history' && (
             <HistoryView 
               key="history"
-              documents={documents} 
+              documents={documents || []} 
               onBack={() => setView('dashboard')} 
               currency={currency}
             />
@@ -248,10 +253,8 @@ function RechargeModal({ profile, onClose, currency }: { profile: UserProfile | 
     setIsProcessing(true);
     const newCredits = profile.credits + amount;
     
-    // Update user balance
     updateDocumentNonBlocking(doc(db, 'users', profile.uid), { credits: newCredits });
     
-    // Log transaction
     addDocumentNonBlocking(collection(db, 'transactions'), {
       userId: profile.uid,
       amount: amount,
@@ -351,23 +354,6 @@ function LoginView({ onLogin }: { onLogin: () => void }) {
           <img src="https://www.google.com/favicon.ico" className="w-5 h-5 grayscale group-hover:grayscale-0 transition-all" alt="Google" />
           Se connecter avec Google
         </button>
-
-        <div className="mt-10 pt-8 border-t border-slate-100">
-          <div className="flex justify-center gap-8 text-slate-400">
-            <div className="flex flex-col items-center gap-1">
-              <div className="font-bold text-slate-900 text-sm">100%</div>
-              <div className="text-[10px] uppercase tracking-widest">Conforme</div>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="font-bold text-slate-900 text-sm">PDF</div>
-              <div className="text-[10px] uppercase tracking-widest">Inclus</div>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="font-bold text-slate-900 text-sm">24/7</div>
-              <div className="text-[10px] uppercase tracking-widest">Disponible</div>
-            </div>
-          </div>
-        </div>
       </motion.div>
     </div>
   );
@@ -527,7 +513,7 @@ function Navbar({ profile, setView, onLogout, currency, setCurrency, onRecharge 
 }
 
 function DashboardView({ profile, documents, onNew, onHistory, currency, onRecharge }: { profile: UserProfile | null, documents: DocumentData[], onNew: any, onHistory: any, currency: 'FC' | 'USD', onRecharge: () => void }) {
-  const recentDocs = documents.slice(0, 3);
+  const recentDocs = (documents || []).slice(0, 3);
 
   return (
     <motion.div 
@@ -559,12 +545,7 @@ function DashboardView({ profile, documents, onNew, onHistory, currency, onRecha
             <div className="text-2xl font-bold font-headline">{profile ? formatCurrency(profile.credits, currency) : formatCurrency(0, currency)}</div>
             <div className="flex items-center gap-2">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Solde Actuel</div>
-              <button 
-                onClick={onRecharge}
-                className="text-[10px] font-bold text-primary hover:underline"
-              >
-                Recharger
-              </button>
+              <button onClick={onRecharge} className="text-[10px] font-bold text-primary hover:underline">Recharger</button>
             </div>
           </div>
         </div>
@@ -609,13 +590,7 @@ function DashboardView({ profile, documents, onNew, onHistory, currency, onRecha
             <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200">
               <FileText className="w-16 h-16 text-slate-200 mx-auto mb-4" />
               <h3 className="text-lg font-bold mb-1">Aucun document pour le moment</h3>
-              <p className="text-muted-foreground text-sm mb-6">Commencez par créer votre premier document académique.</p>
-              <button 
-                onClick={onNew}
-                className="text-primary font-bold hover:underline"
-              >
-                Créer maintenant
-              </button>
+              <button onClick={onNew} className="text-primary font-bold hover:underline">Créer maintenant</button>
             </div>
           )}
         </div>
@@ -625,6 +600,10 @@ function DashboardView({ profile, documents, onNew, onHistory, currency, onRecha
 }
 
 function DocCard({ doc, currency }: { doc: DocumentData, currency: 'FC' | 'USD' }) {
+  const dateStr = (doc.createdAt && typeof doc.createdAt.toDate === 'function') 
+    ? doc.createdAt.toDate().toLocaleDateString('fr-FR') 
+    : '...';
+
   return (
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
       <div className="flex justify-between items-start mb-4">
@@ -648,13 +627,10 @@ function DocCard({ doc, currency }: { doc: DocumentData, currency: 'FC' | 'USD' 
         <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-bold uppercase">
           {doc.pageCount || 0} PAGES
         </span>
-        <span className="text-[10px] bg-primary/10 px-2 py-0.5 rounded text-primary font-bold uppercase">
-          {doc.serviceType === 'simple' ? 'PDF' : doc.serviceType === 'nb' ? 'NB' : 'Couleur'}
-        </span>
       </div>
       
       <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(doc.createdAt?.toDate()).toLocaleDateString()}</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{dateStr}</span>
         <span className="font-bold text-slate-900 font-headline">{formatCurrency(doc.price, currency)}</span>
       </div>
     </div>
@@ -667,18 +643,8 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
   const [serviceType, setServiceType] = useState<'simple' | 'nb' | 'color'>('simple');
   const [hasCoverPage, setHasCoverPage] = useState(false);
   const [hasBinding, setHasBinding] = useState(false);
-  const [formData, setFormData] = useState({
-    course: '',
-    professor: '',
-    title: '',
-    content: ''
-  });
-  const [settings, setSettings] = useState<DocSettings>({
-    font: 'Times New Roman',
-    fontSize: 12,
-    lineHeight: '1.5',
-    margins: 'normal'
-  });
+  const [formData, setFormData] = useState({ course: '', professor: '', title: '', content: '' });
+  const [settings, setSettings] = useState<DocSettings>({ font: 'Times New Roman', fontSize: 12, lineHeight: '1.5', margins: 'normal' });
   
   const [aiSuggestions, setAiSuggestions] = useState<IntelligentFormattingAssistantOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -698,21 +664,6 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
     if (hasCoverPage) total += 1500;
     if (hasBinding && serviceType !== 'simple') total += 1000;
     return total;
-  };
-
-  const parseLaTeXToMarkdown = (text: string) => {
-    let converted = text;
-    converted = converted.replace(/\\textbf\{(.*?)\}/g, '**$1**');
-    converted = converted.replace(/\\textit\{(.*?)\}/g, '*$1*');
-    converted = converted.replace(/\\underline\{(.*?)\}/g, '<u>$1</u>');
-    converted = converted.replace(/^\\section\{(.*?)\}/gm, '# $1');
-    converted = converted.replace(/^\\subsection\{(.*?)\}/gm, '## $1');
-    converted = converted.replace(/\\begin\{itemize\}/g, '');
-    converted = converted.replace(/\\end\{itemize\}/g, '');
-    converted = converted.replace(/\\item\s+(.*)/g, '- $1');
-    converted = converted.replace(/\\begin\{enumerate\}/g, '');
-    converted = converted.replace(/\\end\{enumerate\}/g, '');
-    return converted;
   };
 
   const handleAiAnalyze = async () => {
@@ -741,6 +692,11 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
         return;
       }
 
+      if (isPaid && previewRef.current) {
+        // Trigger download while ref is still valid
+        await downloadPDF();
+      }
+
       const docData: Omit<DocumentData, 'id'> = {
         userId: profile.uid,
         course: formData.course,
@@ -760,12 +716,10 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
       addDocumentNonBlocking(collection(db, 'documents'), docData);
 
       if (isPaid) {
-        // Deduct credits
         updateDocumentNonBlocking(doc(db, 'users', profile.uid), {
           credits: profile.credits - price
         });
         
-        // Log transaction
         addDocumentNonBlocking(collection(db, 'transactions'), {
           userId: profile.uid,
           amount: price,
@@ -773,10 +727,6 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
           description: `Paiement document: ${formData.course}`,
           timestamp: serverTimestamp()
         });
-
-        setTimeout(() => {
-          downloadPDF();
-        }, 500);
       }
 
       onSuccess();
@@ -800,12 +750,7 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="max-w-6xl mx-auto"
-    >
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-10">
         <button onClick={onBack} className="text-muted-foreground hover:text-primary flex items-center gap-2 font-bold text-sm transition-colors group">
           <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Retour
@@ -854,267 +799,70 @@ function NewDocView({ profile, onBack, onSuccess, currency }: { profile: UserPro
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Titre (Optionnel)</label>
-                  <input 
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all"
-                    placeholder="Ex: Rapport de stage"
-                    value={formData.title}
-                    onChange={e => setFormData({...formData, title: e.target.value})}
-                  />
+                  <input className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Cours</label>
-                  <input 
-                    required
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all"
-                    placeholder="Ex: Algorithmique"
-                    value={formData.course}
-                    onChange={e => setFormData({...formData, course: e.target.value})}
-                  />
+                  <input required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Professeur</label>
-                  <input 
-                    required
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all"
-                    placeholder="Ex: Pr. Koffi"
-                    value={formData.professor}
-                    onChange={e => setFormData({...formData, professor: e.target.value})}
-                  />
+                  <input required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none" value={formData.professor} onChange={e => setFormData({...formData, professor: e.target.value})} />
                 </div>
               </div>
               
-              <div className="space-y-1.5 relative">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contenu du Travail</label>
-                  <span className="text-[10px] text-slate-400 font-medium italic">Supporte Markdown & LaTeX</span>
-                </div>
-                <textarea 
-                  required
-                  rows={10}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:bg-white outline-none transition-all min-h-[250px] resize-none font-body"
-                  placeholder="Collez votre texte ici..."
-                  value={formData.content}
-                  onChange={e => setFormData({...formData, content: e.target.value})}
-                />
-              </div>
+              <textarea required rows={10} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary outline-none min-h-[250px] resize-none" placeholder="Contenu..." value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} />
 
               {aiSuggestions && (
                 <div className="p-4 bg-accent/5 rounded-2xl border border-accent/20 space-y-4">
-                  <h4 className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest">
-                    <Zap className="w-3.5 h-3.5" /> Suggestions de l'Assistant
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase">Clarté & Style</p>
-                      <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
-                        {aiSuggestions.claritySuggestions.map((s, i) => <li key={i}>{s}</li>)}
-                      </ul>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase">Grammaire</p>
-                      <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
-                        {aiSuggestions.grammarCorrections.map((s, i) => <li key={i}>{s}</li>)}
-                      </ul>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setAiSuggestions(null)}
-                    className="text-[10px] font-bold text-accent hover:underline"
-                  >
-                    Masquer les suggestions
-                  </button>
+                  <h4 className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest"><Zap className="w-3.5 h-3.5" /> Suggestions</h4>
+                  <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
+                    {aiSuggestions.claritySuggestions.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
                 </div>
               )}
 
               <div className="pt-4 border-t border-slate-100">
-                <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-primary" /> Mise en forme
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Police</label>
-                    <select 
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-primary outline-none"
-                      value={settings.font}
-                      onChange={e => setSettings({...settings, font: e.target.value as any})}
-                    >
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Arial">Arial</option>
-                      <option value="Calibri">Calibri</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Interligne</label>
-                    <select 
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-primary outline-none"
-                      value={settings.lineHeight}
-                      onChange={e => setSettings({...settings, lineHeight: e.target.value as any})}
-                    >
-                      <option value="1">Simple (1.0)</option>
-                      <option value="1.5">Standard (1.5)</option>
-                      <option value="2">Double (2.0)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100">
-                <div className="bg-slate-900 p-5 rounded-2xl text-white shadow-xl shadow-slate-200">
+                <div className="bg-slate-900 p-5 rounded-2xl text-white">
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-xs uppercase tracking-widest text-slate-400">Total Estimé</h4>
                     <div className="px-2 py-0.5 bg-primary rounded text-[10px] font-bold">{calculatePageCount()} PAGES</div>
                   </div>
                   <div className="pt-4 border-t border-slate-800 flex justify-between items-end">
-                    <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-bold">À Payer</div>
-                      <div className="text-2xl font-bold font-headline">{formatCurrency(calculatePrice(), currency)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-500 uppercase font-bold">Equivalent</div>
-                      <div className="text-sm font-medium text-slate-300">≈ {formatCurrency(calculatePrice(), 'USD')}</div>
-                    </div>
+                    <div className="text-2xl font-bold font-headline">{formatCurrency(calculatePrice(), currency)}</div>
                   </div>
                 </div>
               </div>
 
-              <button 
-                onClick={() => setStep('preview')}
-                disabled={!formData.course || !formData.professor || !formData.content}
-                className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
-              >
-                Générer l'aperçu
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              <button onClick={() => setStep('preview')} disabled={!formData.course || !formData.content} className="w-full py-4 bg-primary text-white rounded-2xl font-bold">Générer l'aperçu</button>
             </div>
           )}
 
           {step === 'preview' && (
             <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm space-y-6">
               <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                  <AlertCircle className="w-5 h-5 text-amber-600" />
-                </div>
-                <p className="text-sm text-amber-800 leading-relaxed">
-                  Ceci est un aperçu. Le document final sera généré <span className="font-bold">sans filigrane</span> et prêt pour l'impression après paiement.
-                </p>
+                <p className="text-sm text-amber-800">Ceci est un aperçu. Le document final sera généré sans filigrane.</p>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-500 font-medium">Prix total :</span>
-                  <span className="text-xl font-bold font-headline text-slate-900">{formatCurrency(calculatePrice(), currency)}</span>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-                  <span className="text-sm text-slate-500 font-medium">Votre solde :</span>
-                  <div className="text-right">
-                    <span className={cn("text-lg font-bold font-headline", (profile?.credits || 0) < calculatePrice() ? "text-destructive" : "text-green-600")}>
-                      {formatCurrency(profile?.credits || 0, currency)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex gap-4">
-                <button 
-                  onClick={() => setStep('edit')}
-                  className="flex-1 py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
-                >
-                  Modifier
-                </button>
-                <button 
-                  onClick={() => setStep('payment')}
-                  disabled={(profile?.credits || 0) < calculatePrice()}
-                  className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20"
-                >
-                  Payer maintenant
-                </button>
+                <button onClick={() => setStep('edit')} className="flex-1 py-4 bg-white border-2 border-slate-100 rounded-2xl">Modifier</button>
+                <button onClick={() => setStep('payment')} disabled={(profile?.credits || 0) < calculatePrice()} className="flex-1 py-4 bg-primary text-white rounded-2xl">Payer</button>
               </div>
             </div>
           )}
 
           {step === 'payment' && (
             <div className="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm text-center space-y-8">
-              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-                <CreditCard className="w-10 h-10 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold font-headline">Confirmation Finale</h3>
-                <p className="text-muted-foreground text-sm mt-2">Le montant total sera déduit de votre compte CyberDoc.</p>
-              </div>
-
-              <div className="space-y-4">
-                <button 
-                  onClick={() => handleSave(true)}
-                  disabled={isProcessing || (profile?.credits || 0) < calculatePrice()}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 disabled:opacity-50 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Payer et Télécharger
-                    </>
-                  )}
-                </button>
-                <button 
-                  onClick={() => setStep('preview')}
-                  className="text-slate-400 text-sm font-bold hover:text-slate-600 transition-colors"
-                >
-                  Annuler
-                </button>
-              </div>
+              <button onClick={() => handleSave(true)} disabled={isProcessing} className="w-full py-4 bg-primary text-white rounded-2xl font-bold">{isProcessing ? 'Processing...' : 'Payer et Télécharger'}</button>
             </div>
           )}
         </div>
 
         <div className="lg:col-span-7">
           <div className="sticky top-24">
-            <div className="flex items-center justify-between mb-2 px-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Aperçu du rendu</span>
-              <span className="text-[10px] text-slate-400">Format A4 • {settings.font}</span>
-            </div>
-            
             <div className="bg-slate-200 p-8 rounded-xl shadow-inner overflow-auto max-h-[80vh]">
-              <div 
-                ref={previewRef}
-                className={cn(
-                  "bg-white shadow-2xl mx-auto relative overflow-hidden",
-                  "w-[210mm] min-h-[297mm] p-[25mm]",
-                  settings.margins === 'reduced' && "p-[15mm]"
-                )}
-                style={{ 
-                  fontFamily: settings.font, 
-                  fontSize: `${settings.fontSize}pt`,
-                  lineHeight: settings.lineHeight
-                }}
-              >
-                {step !== 'payment' && (
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center rotate-[-45deg] opacity-[0.03] select-none z-10">
-                    <span className="text-[120px] font-black whitespace-nowrap">APERÇU CYBERDOC</span>
-                  </div>
-                )}
-
-                <div className="text-justify markdown-body font-body">
-                  {(() => {
-                    if (!formData.content) return <p className="text-slate-300 italic">Votre contenu s'affichera ici...</p>;
-                    const cleanContent = formData.content.replace(/(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g, '');
-                    const markdownContent = parseLaTeXToMarkdown(cleanContent);
-                    return (
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
-                        components={{
-                          h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 text-center font-headline" {...props} />,
-                          h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-6 font-headline" {...props} />,
-                          p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props} />,
-                        }}
-                      >
-                        {markdownContent}
-                      </ReactMarkdown>
-                    );
-                  })()}
-                </div>
+              <div ref={previewRef} className="bg-white shadow-2xl mx-auto w-[210mm] min-h-[297mm] p-[25mm] text-justify markdown-body" style={{ fontFamily: settings.font, fontSize: `${settings.fontSize}pt`, lineHeight: settings.lineHeight }}>
+                {step !== 'payment' && <div className="absolute inset-0 flex items-center justify-center rotate-[-45deg] opacity-[0.03] pointer-events-none"><span className="text-[120px] font-black">APERÇU</span></div>}
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{formData.content}</ReactMarkdown>
               </div>
             </div>
           </div>
@@ -1153,91 +901,31 @@ function HistoryView({ documents, onBack, currency }: { documents: DocumentData[
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-8"
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <button onClick={onBack} className="text-slate-500 hover:text-primary flex items-center gap-2 font-bold text-sm transition-colors mb-2 group">
-            <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Retour au tableau de bord
-          </button>
-          <h1 className="text-3xl font-bold font-headline">Historique des Documents</h1>
-        </div>
-      </div>
-
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+      <button onClick={onBack} className="text-slate-500 hover:text-primary flex items-center gap-2 font-bold text-sm mb-2 group"><ChevronRight className="w-4 h-4 rotate-180" /> Retour</button>
+      <h1 className="text-3xl font-bold font-headline">Historique</h1>
       <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200">
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Document</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Service</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Pages</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Date</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Statut</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50/50 border-b">
+              <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Document</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {documents.length > 0 ? documents.map(doc => (
+              <tr key={doc.id} className="hover:bg-slate-50/50">
+                <td className="px-8 py-6">
+                  <div className="font-bold">{doc.course}</div>
+                  <div className="text-xs text-slate-400">{doc.professor}</div>
+                </td>
+                <td className="px-8 py-6 text-right">
+                  {doc.isPaid && <button onClick={() => downloadPDF(doc)} disabled={isDownloading === doc.id} className="w-10 h-10 inline-flex items-center justify-center text-primary hover:bg-primary/10 rounded-xl">{isDownloading === doc.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}</button>}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {documents.length > 0 ? (
-                documents.map(doc => (
-                  <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
-                      <div className="font-bold text-slate-900 group-hover:text-primary transition-colors">{doc.course}</div>
-                      <div className="text-xs text-slate-400">{doc.professor}</div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded uppercase">
-                        {doc.serviceType === 'simple' ? 'PDF' : doc.serviceType === 'nb' ? 'NB' : 'Couleur'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
-                        {doc.pageCount || 0}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-sm text-slate-500">
-                      {doc.createdAt?.toDate ? new Date(doc.createdAt.toDate()).toLocaleDateString() : 'En cours...'}
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full",
-                        doc.isPaid ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                      )}>
-                        {doc.isPaid ? "Payé" : "Brouillon"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      {doc.isPaid ? (
-                        <button 
-                          onClick={() => downloadPDF(doc)}
-                          disabled={isDownloading === doc.id}
-                          className="w-10 h-10 inline-flex items-center justify-center text-primary hover:bg-primary hover:text-white rounded-xl transition-all shadow-sm hover:shadow-primary/20"
-                        >
-                          {isDownloading === doc.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                        </button>
-                      ) : (
-                        <button className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-xl">
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
-                    <History className="w-8 h-8 text-slate-200 mx-auto mb-4" />
-                    <p className="text-slate-400 font-medium">Aucun historique disponible.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            )) : <tr><td colSpan={2} className="px-8 py-20 text-center text-slate-400">Aucun historique.</td></tr>}
+          </tbody>
+        </table>
       </div>
     </motion.div>
   );
