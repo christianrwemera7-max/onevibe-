@@ -1,7 +1,36 @@
+
 {
-  "entities": {},
+  "entities": {
+    "Pass": {
+      "title": "Event Pass",
+      "description": "Types de pass disponibles pour le festival",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["STANDARD", "VIP", "BACKSTAGE"] },
+        "price": { "type": "number" },
+        "benefits": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "price"]
+    },
+    "Talent": {
+      "title": "Festival Talent",
+      "description": "Artistes, créateurs et entrepreneurs participants",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["MUSIC", "CREATIVE", "BUSINESS", "DIGITAL"] },
+        "role": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      }
+    }
+  },
   "auth": {
     "providers": ["google.com"]
   },
-  "firestore": {}
+  "firestore": {
+    "/registrations/{registrationId}": {
+      "schema": "object",
+      "description": "Inscriptions des participants et achats de pass"
+    }
+  }
 }
