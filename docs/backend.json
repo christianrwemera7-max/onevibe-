@@ -1,16 +1,21 @@
 
 {
   "entities": {
-    "Pass": {
-      "title": "Event Pass",
-      "description": "Types de pass disponibles pour le festival",
+    "Registration": {
+      "title": "Festival Registration",
+      "description": "Données d'inscription pour les pass et les exposants",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "enum": ["STANDARD", "VIP", "BACKSTAGE"] },
-        "price": { "type": "number" },
-        "benefits": { "type": "array", "items": { "type": "string" } }
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "type": { "type": "string", "enum": ["PASS", "EXPOSITOR"] },
+        "passCategory": { "type": "string", "enum": ["STANDARD", "VIP", null] },
+        "company": { "type": "string", "description": "Nom de la marque pour les exposants" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["type", "price"]
+      "required": ["name", "email", "type", "createdAt"]
     },
     "Talent": {
       "title": "Festival Talent",
@@ -29,8 +34,12 @@
   },
   "firestore": {
     "/registrations/{registrationId}": {
-      "schema": "object",
+      "schema": "Registration",
       "description": "Inscriptions des participants et achats de pass"
+    },
+    "/talents/{talentId}": {
+      "schema": "Talent",
+      "description": "Liste dynamique des talents affichés sur le site"
     }
   }
 }
