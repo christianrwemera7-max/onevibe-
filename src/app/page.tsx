@@ -10,12 +10,8 @@ import {
   Calendar, 
   MapPin, 
   ArrowRight,
-  CheckCircle2,
   ShoppingBag,
   X,
-  Bot,
-  MessageSquare,
-  Users,
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +28,6 @@ import { collection, addDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
-import { askVibeAssistant } from '@/ai/flows/vibe-assistant-flow';
 
 const imageList = imagesData.placeholderImages;
 const getImg = (id: string) => imageList.find(img => img.id === id)?.imageUrl || 'https://picsum.photos/seed/vibe/600/400';
@@ -118,12 +113,6 @@ export default function VibeFestLanding() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
   const [step, setStep] = useState<1 | 2>(1);
-  
-  // AI Assistant state
-  const [isAiOpen, setIsAiOpen] = useState(false);
-  const [aiQuestion, setAiQuestion] = useState('');
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -159,20 +148,6 @@ export default function VibeFestLanding() {
 
   const handleSelectPayment = (value: string) => {
     setFormData({ ...formData, paymentMethod: value });
-  };
-
-  const handleAiAsk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiQuestion.trim()) return;
-    setIsAiLoading(true);
-    try {
-      const result = await askVibeAssistant(aiQuestion);
-      setAiResponse(result.answer);
-    } catch (err) {
-      toast({ variant: "destructive", title: "Erreur IA", description: "Impossible de joindre l'assistant." });
-    } finally {
-      setIsAiLoading(false);
-    }
   };
 
   const handleSubmitRegistration = (e: React.FormEvent) => {
@@ -512,39 +487,6 @@ export default function VibeFestLanding() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* COIN IA / ASSISTANT SMART - Version compacte */}
-      <div className="fixed bottom-4 right-4 z-50">
-        {!isAiOpen ? (
-          <Button onClick={() => setIsAiOpen(true)} className="w-12 h-12 rounded-full bg-secondary hover:bg-secondary/90 text-black shadow-xl flex items-center justify-center">
-            <Bot className="w-6 h-6" />
-          </Button>
-        ) : (
-          <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="w-72 bg-neutral-900 border border-white/10 rounded-2xl p-4 shadow-xl text-white">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-1.5">
-                <Bot className="w-4 h-4 text-secondary" />
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">VIBE Assistant</span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setIsAiOpen(false)} className="h-6 w-6 text-white"><X className="w-3.5 h-3.5" /></Button>
-            </div>
-
-            {aiResponse ? (
-              <div className="space-y-2">
-                <div className="p-2.5 bg-black/50 rounded-xl text-xs leading-relaxed border border-white/5 max-h-48 overflow-y-auto">{aiResponse}</div>
-                <Button size="sm" variant="outline" className="w-full text-[10px] font-bold h-8 border-white/10" onClick={() => setAiResponse(null)}>AUTRE QUESTION ?</Button>
-              </div>
-            ) : (
-              <form onSubmit={handleAiAsk} className="space-y-2">
-                <Textarea value={aiQuestion} onChange={(e) => setAiQuestion(e.target.value)} placeholder="Tarifs, accès, programme..." className="bg-black border-white/10 min-h-[60px] text-xs rounded-lg" />
-                <Button type="submit" disabled={isAiLoading} className="w-full bg-secondary text-black font-bold uppercase text-[9px] tracking-wider h-8 rounded-lg">
-                  {isAiLoading ? "RECHERCHE..." : "DEMANDER"}
-                </Button>
-              </form>
-            )}
-          </motion.div>
-        )}
-      </div>
 
     </div>
   );
