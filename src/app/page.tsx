@@ -118,7 +118,7 @@ const partners = [
 const faqs = [
   { q: "Où se déroule ONE VIBE FEST ?", a: "Le festival se déroule en plein cœur de la ville, au prestigieux Palais des Congrès, aménagé spécialement pour l'occasion en plusieurs zones immersives." },
   { q: "À quelle date et quels horaires ?", a: "L'événement se tiendra le Samedi 15 Juillet 2024 de 10:00 à 21:00 en continu." },
-  { q: "Quel est le prix du pass et comment l'acheter ?", a: "Le Pass Standard est à 25 FC et le Pass VIP à 75 FC. Vous pouvez le réserver directement en ligne sur ce site via le parcours sécurisé opéré en partenariat avec Digi Event." },
+  { q: "Quel est le prix du pass et comment l'acheter ?", a: "Le Pass Standard est à 10.000 FC et le Pass VIP à 30.000 FC. Vous pouvez le réserver directement en ligne sur ce site via le parcours sécurisé opéré en partenariat avec Digi Event." },
   { q: "Comment devenir exposant ou partenaire ?", a: "Il vous suffit de remplir le formulaire dédié dans la section 'Vibe Market' ou 'Contact' directement plus bas sur cette page. Notre équipe vous recontactera sous 48h." },
   { q: "Qu'inclut l'accès VIP ?", a: "Le Pass VIP comprend un accès coupe-file prioritaire, une place réservée au premier rang 'Front-stage', l'accès au salon de networking des talents et un pack exclusif de bienvenue (boisson & snacks inclus)." }
 ];
@@ -480,7 +480,7 @@ export default function VibeFestLanding() {
                   <Ticket className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-6xl font-black text-foreground mb-8 tracking-tighter">
-                  25 <span className="text-lg font-bold text-muted-foreground uppercase tracking-wider">FC</span>
+                  10.000 <span className="text-lg font-bold text-muted-foreground uppercase tracking-wider">FC</span>
                 </div>
                 
                 <div className="space-y-4 mb-12">
@@ -519,7 +519,7 @@ export default function VibeFestLanding() {
                   <Sparkles className="w-6 h-6 text-secondary" />
                 </div>
                 <div className="text-6xl font-black text-white mb-8 tracking-tighter">
-                  75 <span className="text-lg font-bold text-white/60 uppercase tracking-wider">FC</span>
+                  30.000 <span className="text-lg font-bold text-white/60 uppercase tracking-wider">FC</span>
                 </div>
                 
                 <div className="space-y-4 mb-12">
