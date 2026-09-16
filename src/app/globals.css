@@ -1,47 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Source+Code+Pro:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-headline: "Outfit", sans-serif;
-  --font-code: "Source Code Pro", monospace;
-
-  /* PRD Primary: #2563EB */
-  --color-primary: hsl(215 90% 53%);
-  --color-primary-foreground: hsl(210 40% 98%);
-
-  /* PRD Background: #F2F6FA */
-  --color-background: hsl(215 20% 97%);
-  --color-foreground: hsl(222 47% 11%);
-
-  /* PRD Accent: #26ACC9 */
-  --color-accent: hsl(185 70% 50%);
-  --color-accent-foreground: hsl(222 47% 11.2%);
-
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222 47% 11%);
-
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222 47% 11%);
-
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222 47% 11.2%);
-
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(0 0% 3.9%);
+  --color-primary: hsl(0 0% 9%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(0 0% 96.1%);
+  --color-secondary-foreground: hsl(0 0% 9%);
+  --color-muted: hsl(0 0% 96.1%);
+  --color-muted-foreground: hsl(0 0% 45.1%);
+  --color-accent: hsl(0 0% 96.1%);
+  --color-accent-foreground: hsl(0 0% 9%);
   --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(215 90% 53%);
-
-  --radius-lg: 0.75rem;
-  --radius-md: calc(0.75rem - 2px);
-  --radius-sm: calc(0.75rem - 4px);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(0 0% 89.8%);
+  --color-input: hsl(0 0% 89.8%);
+  --color-ring: hsl(0 0% 3.9%);
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
 }
 
 @layer base {
@@ -51,31 +28,5 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-family: var(--font-sans);
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    letter-spacing: -0.025em;
-  }
-}
-
-.markdown-body table {
-  margin-bottom: calc(var(--spacing) * 4);
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.markdown-body th {
-  border: 1px solid hsl(214.3 31.8% 91.4%);
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
-  background-color: hsl(210 40% 96.1%);
-  font-weight: 700;
-  text-align: left;
-}
-
-.markdown-body td {
-  border: 1px solid hsl(214.3 31.8% 91.4%);
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
 }
