@@ -1,0 +1,77 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Crowd at a vibrant festival with neon lights",
+      "imageUrl": "https://picsum.photos/seed/vibehero/1920/1080",
+      "imageHint": "festival crowd"
+    },
+    {
+      "id": "music-vibe",
+      "description": "DJ performing with neon lights",
+      "imageUrl": "https://picsum.photos/seed/vibemusic/800/600",
+      "imageHint": "dj music"
+    },
+    {
+      "id": "creative-vibe",
+      "description": "Fashion model on a street style runway",
+      "imageUrl": "https://picsum.photos/seed/vibecreative/800/600",
+      "imageHint": "fashion art"
+    },
+    {
+      "id": "business-vibe",
+      "description": "Young entrepreneur pitching in a modern space",
+      "imageUrl": "https://picsum.photos/seed/vibebusiness/800/600",
+      "imageHint": "entrepreneur pitch"
+    },
+    {
+      "id": "digital-vibe",
+      "description": "E-sports setup with glowing hardware",
+      "imageUrl": "https://picsum.photos/seed/vibedigital/800/600",
+      "imageHint": "gaming digital"
+    },
+    {
+      "id": "talent-artist",
+      "description": "Musician singing passionately on stage",
+      "imageUrl": "https://picsum.photos/seed/vibeartist/600/600",
+      "imageHint": "singer performance"
+    },
+    {
+      "id": "talent-creator",
+      "description": "Designer sketching custom clothing line",
+      "imageUrl": "https://picsum.photos/seed/vibecreator/600/600",
+      "imageHint": "fashion designer"
+    },
+    {
+      "id": "talent-entrepreneur",
+      "description": "Tech founder showcasing innovative product mobile app",
+      "imageUrl": "https://picsum.photos/seed/vibetentre/600/600",
+      "imageHint": "startup founder"
+    },
+    {
+      "id": "market-fashion",
+      "description": "Sleek streetwear pop-up stand exhibition",
+      "imageUrl": "https://picsum.photos/seed/vibemarket1/600/400",
+      "imageHint": "streetwear shop"
+    },
+    {
+      "id": "market-food",
+      "description": "Gourmet street food burger truck close up",
+      "imageUrl": "https://picsum.photos/seed/vibemarket2/600/400",
+      "imageHint": "street food"
+    },
+    {
+      "id": "moment-1",
+      "description": "Energetic fans with hands raised at festival night",
+      "imageUrl": "https://picsum.photos/seed/vibemom1/800/500",
+      "imageHint": "festival party"
+    },
+    {
+      "id": "moment-2",
+      "description": "Live neon street art graffiti wall painting session",
+      "imageUrl": "https://picsum.photos/seed/vibemom2/800/500",
+      "imageHint": "live painting"
+    }
+  ]
+}
