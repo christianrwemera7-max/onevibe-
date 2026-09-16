@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Registration": {
@@ -13,7 +12,8 @@
         "passCategory": { "type": "string", "enum": ["STANDARD", "VIP", null] },
         "company": { "type": "string", "description": "Nom de la marque pour les exposants" },
         "message": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "ticketCode": { "type": "string", "description": "Code unique généré pour le billet" }
       },
       "required": ["name", "email", "type", "createdAt"]
     },
@@ -26,6 +26,28 @@
         "category": { "type": "string", "enum": ["MUSIC", "CREATIVE", "BUSINESS", "DIGITAL"] },
         "role": { "type": "string" },
         "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "role", "imageUrl"]
+    },
+    "ProgramItem": {
+      "title": "Program Item",
+      "description": "Élément de la programmation horaire du festival",
+      "type": "object",
+      "properties": {
+        "time": { "type": "string" },
+        "title": { "type": "string" },
+        "desc": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["time", "title", "desc", "imageUrl"]
+    },
+    "FestivalSettings": {
+      "title": "Festival Settings",
+      "description": "Configurations modifiables de l'événement par les admins",
+      "type": "object",
+      "properties": {
+        "heroImageUrl": { "type": "string" },
+        "title": { "type": "string" }
       }
     }
   },
@@ -35,11 +57,19 @@
   "firestore": {
     "/registrations/{registrationId}": {
       "schema": "Registration",
-      "description": "Inscriptions des participants et achats de pass"
+      "description": "Inscriptions des participants, achats de pass et codes uniques"
     },
     "/talents/{talentId}": {
       "schema": "Talent",
       "description": "Liste dynamique des talents affichés sur le site"
+    },
+    "/program/{programId}": {
+      "schema": "ProgramItem",
+      "description": "Liste dynamique de la programmation chronologique"
+    },
+    "/settings/festival": {
+      "schema": "FestivalSettings",
+      "description": "Paramètres généraux modifiables comme l'image Hero"
     }
   }
 }

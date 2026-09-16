@@ -12,7 +12,9 @@ import {
   ArrowRight,
   ShoppingBag,
   X,
-  ChevronRight
+  ChevronRight,
+  QrCode,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,8 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 
 import imagesData from './lib/placeholder-images.json';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, doc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
@@ -83,20 +85,20 @@ const universes = [
   }
 ];
 
-const program = [
-  { time: "10:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques." },
-  { time: "11:00", title: "VIBE CREATIVE Launch", desc: "Performances en direct et défilé sur la scène centrale." },
-  { time: "12:00", title: "ONE VIBE PITCH Arena", desc: "8 projets s'affrontent pour le prix business." },
-  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale E-sport retransmise sur écran géant." },
-  { time: "16:00", title: "VIBE MUSIC Open Mic", desc: "Scène ouverte suivie d'un battle de scratch légendaire." },
-  { time: "18:00", title: "LE GRAND SHOW", desc: "Performances exclusives des têtes d'affiches." },
-  { time: "20:00", title: "ONE VIBE CLOSING", desc: "Remise des prix, set de clôture mémorable." }
+const defaultProgram = [
+  { time: "10:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques.", imageUrl: getImg('hero-bg') },
+  { time: "11:00", title: "VIBE CREATIVE Launch", desc: "Performances en direct et défilé sur la scène centrale.", imageUrl: getImg('creative-vibe') },
+  { time: "12:00", title: "ONE VIBE PITCH Arena", desc: "8 projets s'affrontent pour le prix business.", imageUrl: getImg('business-vibe') },
+  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale E-sport retransmise sur écran géant.", imageUrl: getImg('digital-vibe') },
+  { time: "16:00", title: "VIBE MUSIC Open Mic", desc: "Scène ouverte suivie d'un battle de scratch légendaire.", imageUrl: getImg('music-vibe') },
+  { time: "18:00", title: "LE GRAND SHOW", desc: "Performances exclusives des têtes d'affiches.", imageUrl: getImg('moment-1') },
+  { time: "20:00", title: "ONE VIBE CLOSING", desc: "Remise des prix, set de clôture mémorable.", imageUrl: getImg('moment-2') }
 ];
 
-const talents = [
-  { name: "Alex K.", role: "Musicien & Producteur", type: "ARTISTE", img: getImg('talent-artist') },
-  { name: "Sonia M.", role: "Styliste Streetwear", type: "CRÉATEUR", img: getImg('talent-creator') },
-  { name: "Idriss T.", role: "Fondateur TechVibe", type: "ENTREPRENEUR", img: getImg('talent-entrepreneur') }
+const defaultTalents = [
+  { name: "Alex K.", role: "Musicien & Producteur", type: "MUSIC", img: getImg('talent-artist') },
+  { name: "Sonia M.", role: "Styliste Streetwear", type: "CREATIVE", img: getImg('talent-creator') },
+  { name: "Idriss T.", role: "Fondateur TechVibe", type: "BUSINESS", img: getImg('talent-entrepreneur') }
 ];
 
 const faqs = [
@@ -109,10 +111,40 @@ export default function VibeFestLanding() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
+  // Dynamic settings & collections
+  const settingsDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: festivalSettings } = useDoc(settingsDocRef);
+
+  const programCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'program');
+  }, [firestore]);
+  const { data: dynamicProgram } = useCollection(programCollectionRef);
+
+  const talentsCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'talents');
+  }, [firestore]);
+  const { data: dynamicTalents } = useCollection(talentsCollectionRef);
+
+  const registrationsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'registrations');
+  }, [firestore]);
+
+  // Combined variables (Fallback if Firestore empty)
+  const heroImage = festivalSettings?.heroImageUrl || getImg('hero-bg');
+  const activeProgram = dynamicProgram && dynamicProgram.length > 0 ? [...dynamicProgram].sort((a,b) => a.time.localeCompare(b.time)) : defaultProgram;
+  const activeTalents = dynamicTalents && dynamicTalents.length > 0 ? dynamicTalents : null;
+
   // Modals status
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
   const [step, setStep] = useState<1 | 2>(1);
+  const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -124,17 +156,13 @@ export default function VibeFestLanding() {
     message: ''
   });
 
-  const registrationsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'registrations');
-  }, [firestore]);
-
   const handleOpenForm = (type: 'PASS' | 'EXPOSITOR', category?: string) => {
     setFormType(type);
     if (category) {
       setFormData(prev => ({ ...prev, passCategory: category }));
     }
     setStep(1);
+    setGeneratedTicket(null);
     setIsModalOpen(true);
   };
 
@@ -154,6 +182,8 @@ export default function VibeFestLanding() {
     e.preventDefault();
     if (!registrationsRef) return;
 
+    const uniqueTicketId = `OVF-2024-${Math.floor(100000 + Math.random() * 900000)}`;
+
     const submissionData = {
       name: formData.name,
       email: formData.email,
@@ -163,6 +193,7 @@ export default function VibeFestLanding() {
       paymentMethod: formType === 'PASS' ? formData.paymentMethod : null,
       company: formType === 'EXPOSITOR' ? formData.company : null,
       message: formData.message,
+      ticketCode: uniqueTicketId,
       createdAt: new Date().toISOString()
     };
 
@@ -176,18 +207,17 @@ export default function VibeFestLanding() {
         errorEmitter.emit('permission-error', permissionError);
       });
 
+    setGeneratedTicket(uniqueTicketId);
     toast({
-      title: formType === 'PASS' ? "Commande validée !" : "Candidature reçue !",
-      description: formType === 'PASS' ? "Votre billet est en cours de validation." : "Notre équipe examine votre marque.",
+      title: formType === 'PASS' ? "Billet généré avec succès !" : "Candidature reçue !",
+      description: formType === 'PASS' ? "Votre affiche souvenir avec code unique QR est prête." : "Notre équipe examine votre marque.",
     });
-
-    setIsModalOpen(false);
   };
 
   return (
     <div className="bg-background text-foreground font-sans antialiased min-h-screen selection:bg-primary selection:text-white">
       
-      {/* NAVIGATION - Hauteur réduite sur mobile pour économiser l'espace */}
+      {/* NAVIGATION */}
       <nav className="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 h-14 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -200,7 +230,7 @@ export default function VibeFestLanding() {
             <a href="#programme" className="hover:text-primary transition-colors text-muted-foreground">Programme</a>
             <a href="#talents" className="hover:text-primary transition-colors text-muted-foreground">Talents</a>
             <a href="#pass" className="hover:text-primary transition-colors text-muted-foreground">Pass</a>
-            <a href="#market" className="hover:text-primary transition-colors text-muted-foreground">Market</a>
+            <a href="/admin" className="text-secondary hover:underline transition-all">Admin Dashboard</a>
           </div>
 
           <Button size="sm" onClick={() => handleOpenForm('PASS', 'STANDARD')} className="font-bold rounded-full bg-primary hover:bg-primary/90 text-white text-xs md:text-sm px-4 md:px-6">
@@ -209,10 +239,10 @@ export default function VibeFestLanding() {
         </div>
       </nav>
 
-      {/* HERO - Compacté sur mobile */}
+      {/* HERO */}
       <section className="relative min-h-[85vh] md:min-h-screen flex items-center pt-14 overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <Image src={getImg('hero-bg')} alt="Festival crowd" fill className="object-cover opacity-40 mix-blend-screen" priority data-ai-hint="festival crowd" />
+          <Image src={heroImage} alt="Festival experience background" fill className="object-cover opacity-40 mix-blend-screen" priority data-ai-hint="festival scene" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-black/80" />
         </div>
         
@@ -244,7 +274,7 @@ export default function VibeFestLanding() {
         </div>
       </section>
 
-      {/* L'EXPÉRIENCE / 4 UNIVERS - Plus dense pour économiser le scroll */}
+      {/* L'EXPÉRIENCE / 4 UNIVERS */}
       <section id="univers" className="py-12 md:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16">
@@ -285,19 +315,23 @@ export default function VibeFestLanding() {
         </div>
       </section>
 
-      {/* PROGRAMME CHRONOLOGIQUE - Compacté */}
+      {/* PROGRAMME CHRONOLOGIQUE - Dynamique */}
       <section id="programme" className="py-12 md:py-24 bg-muted/5">
-        <div className="max-w-3xl mx-auto px-4">
+        <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tight mb-10 text-center">LA VIBE <span className="text-primary">TIME-LINE</span></h2>
           
-          <div className="relative border-l-2 border-primary/30 pl-4 md:pl-6 space-y-4 ml-2">
-            {program.map((prog, i) => (
-              <div key={i} className="relative bg-white/5 border border-white/5 p-3 rounded-xl hover:bg-white/10 transition-colors flex items-start gap-3">
-                <div className="absolute -left-[23px] top-4 w-3 h-3 rounded-full bg-primary" />
-                <span className="text-sm font-black text-primary bg-primary/10 px-2 py-0.5 rounded">{prog.time}</span>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs md:text-sm font-bold text-white uppercase truncate">{prog.title}</h3>
-                  <p className="text-[11px] md:text-xs text-muted-foreground line-clamp-2 mt-0.5">{prog.desc}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeProgram.map((prog, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-xl flex gap-4 items-center">
+                {prog.imageUrl && (
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
+                    <img src={prog.imageUrl} alt="" className="object-cover w-full h-full" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded inline-block mb-1">{prog.time}</span>
+                  <h3 className="text-sm font-bold text-white uppercase truncate">{prog.title}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{prog.desc}</p>
                 </div>
               </div>
             ))}
@@ -305,15 +339,25 @@ export default function VibeFestLanding() {
         </div>
       </section>
 
-      {/* LES TALENTS - Une ligne sur mobile / grille compacte */}
+      {/* LES TALENTS - Dynamique */}
       <section id="talents" className="py-12 md:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl md:text-5xl font-black uppercase mb-10 text-center">LES ACTEURS DE LA <span className="text-secondary">VIBE</span></h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {talents.map((t, i) => (
-              <div key={i} className="relative rounded-xl overflow-hidden aspect-[4/3] sm:aspect-square group">
-                <Image src={t.img} alt={t.name} fill className="object-cover" />
+            {activeTalents ? activeTalents.map((t) => (
+              <div key={t.id} className="relative rounded-xl overflow-hidden aspect-square group">
+                <img src={t.imageUrl} alt={t.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute bottom-3 left-3">
+                  <span className="text-[9px] font-bold bg-secondary text-black px-2 py-0.5 rounded-full block w-fit mb-1">{t.category}</span>
+                  <h3 className="text-base font-black text-white">{t.name}</h3>
+                  <p className="text-xs text-white/60">{t.role}</p>
+                </div>
+              </div>
+            )) : defaultTalents.map((t, i) => (
+              <div key={i} className="relative rounded-xl overflow-hidden aspect-square group">
+                <img src={t.img} alt={t.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-[9px] font-bold bg-secondary text-black px-2 py-0.5 rounded-full block w-fit mb-1">{t.type}</span>
@@ -376,7 +420,7 @@ export default function VibeFestLanding() {
         </div>
       </section>
 
-      {/* FAQ & SÉCURITÉ */}
+      {/* FAQ */}
       <section className="py-12 bg-neutral-950 border-t border-white/10">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="text-xl font-black uppercase text-center mb-6">FAQ ESSENTIELLE</h2>
@@ -391,7 +435,7 @@ export default function VibeFestLanding() {
         </div>
       </section>
 
-      {/* FOOTER - Très compact */}
+      {/* FOOTER */}
       <footer className="bg-black py-10 border-t border-white/10 text-center text-xs text-muted-foreground">
         <div className="max-w-7xl mx-auto px-4 space-y-4">
           <div className="font-black text-primary text-base tracking-tighter">ONE VIBE FEST</div>
@@ -402,87 +446,130 @@ export default function VibeFestLanding() {
         </div>
       </footer>
 
-      {/* CONVERSION QUICK MODAL (2 ETAPES / PAYMENTS SIMPLIFIÉS) */}
+      {/* CONVERSION QUICK MODAL WITH QR CREATION DISPLAY */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-neutral-950 border border-white/10 rounded-2xl p-5 max-w-sm w-full relative text-white max-h-[90vh] overflow-y-auto">
               <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-white"><X className="w-5 h-5" /></button>
               
-              <h3 className="text-xl font-black uppercase mb-1">
-                {formType === 'PASS' ? `TICKET ${formData.passCategory}` : "ESPACE EXPOSANT"}
-              </h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                {formType === 'PASS' ? "Accès instantané sécurisé en 2 étapes." : "Présentez votre marque au festival."}
-              </p>
+              {!generatedTicket ? (
+                <>
+                  <h3 className="text-xl font-black uppercase mb-1">
+                    {formType === 'PASS' ? `TICKET ${formData.passCategory}` : "ESPACE EXPOSANT"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {formType === 'PASS' ? "Accès instantané sécurisé en 2 étapes." : "Présentez votre marque au festival."}
+                  </p>
 
-              <form onSubmit={handleSubmitRegistration} className="space-y-3">
-                {step === 1 ? (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Vos informations</label>
-                      <Input name="name" value={formData.name} onChange={handleInputChange} required placeholder="Nom complet" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
-                      <Input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="Adresse email" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
-                      <Input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required placeholder="Numéro de téléphone" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
-                    </div>
+                  <form onSubmit={handleSubmitRegistration} className="space-y-3">
+                    {step === 1 ? (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Vos informations</label>
+                          <Input name="name" value={formData.name} onChange={handleInputChange} required placeholder="Nom complet" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
+                          <Input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="Adresse email" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
+                          <Input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required placeholder="Numéro de téléphone" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
+                        </div>
 
-                    {formType === 'EXPOSITOR' && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Votre projet</label>
-                        <Input name="company" value={formData.company} onChange={handleInputChange} required placeholder="Nom de votre marque" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
-                        <Textarea name="message" value={formData.message} onChange={handleInputChange} placeholder="Décrivez vos produits..." className="bg-black border-white/10 text-sm rounded-xl min-h-[60px]" />
+                        {formType === 'EXPOSITOR' && (
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Votre projet</label>
+                            <Input name="company" value={formData.company} onChange={handleInputChange} required placeholder="Nom de votre marque" className="bg-black border-white/10 h-11 text-sm rounded-xl" />
+                            <Textarea name="message" value={formData.message} onChange={handleInputChange} placeholder="Décrivez vos produits..." className="bg-black border-white/10 text-sm rounded-xl min-h-[60px]" />
+                          </div>
+                        )}
+
+                        {formType === 'PASS' ? (
+                          <Button type="button" onClick={() => setStep(2)} className="w-full h-11 bg-primary text-white font-bold rounded-xl text-xs uppercase mt-2">
+                            CHOISIR LE MODE DE PAIEMENT
+                          </Button>
+                        ) : (
+                          <Button type="submit" className="w-full h-11 bg-primary text-white font-bold rounded-xl text-xs uppercase mt-2">
+                            SOUMETTRE MA CANDIDATURE
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Mode de facturation</label>
+                          <Select value={formData.passCategory} onValueChange={handleSelectCategory}>
+                            <SelectTrigger className="bg-black border-white/10 h-11 text-sm rounded-xl">
+                              <SelectValue placeholder="Catégorie de billet" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-neutral-900 border-white/10 text-white">
+                              <SelectItem value="STANDARD">Standard - 10.000 FC</SelectItem>
+                              <SelectItem value="VIP">VIP - 30.000 FC</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Mode de paiement local</label>
+                          <Select value={formData.paymentMethod} onValueChange={handleSelectPayment}>
+                            <SelectTrigger className="bg-black border-white/10 h-11 text-sm rounded-xl">
+                              <SelectValue placeholder="Méthode" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-neutral-900 border-white/10 text-white">
+                              <SelectItem value="MOBILE_MONEY">Mobile Money (M-Pesa, Orange, Airtel)</SelectItem>
+                              <SelectItem value="CARD">Carte Bancaire / Visa / Mastercard</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="p-3 bg-white/5 border border-white/5 rounded-xl text-[11px] text-muted-foreground">
+                          Montant total dû : <span className="text-white font-bold">{formData.passCategory === 'VIP' ? '30.000 FC' : '10.000 FC'}</span>.
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3 h-11 border-white/10 text-white text-xs">RETOUR</Button>
+                          <Button type="submit" className="w-2/3 h-11 bg-secondary text-black font-black rounded-xl text-xs uppercase">CONFIRMER & PAYER</Button>
+                        </div>
                       </div>
                     )}
-
-                    {formType === 'PASS' ? (
-                      <Button type="button" onClick={() => setStep(2)} className="w-full h-11 bg-primary text-white font-bold rounded-xl text-xs uppercase mt-2">
-                        CHOISIR LE LE PAIEMENT
-                      </Button>
-                    ) : (
-                      <Button type="submit" className="w-full h-11 bg-primary text-white font-bold rounded-xl text-xs uppercase mt-2">
-                        SOUMETTRE MA CANDIDATURE
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Mode de facturation</label>
-                      <Select value={formData.passCategory} onValueChange={handleSelectCategory}>
-                        <SelectTrigger className="bg-black border-white/10 h-11 text-sm rounded-xl">
-                          <SelectValue placeholder="Catégorie de billet" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-neutral-900 border-white/10 text-white">
-                          <SelectItem value="STANDARD">Standard - 10.000 FC</SelectItem>
-                          <SelectItem value="VIP">VIP - 30.000 FC</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  </form>
+                </>
+              ) : (
+                /* ÉCRAN DE FIERTÉ AVEC LE CODE QR DE L'AFFICHE EMBEDDED */
+                <div className="text-center space-y-4 py-4 animate-in fade-in zoom-in-95">
+                  <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-black uppercase text-white">Votre Billet est prêt !</h3>
+                  <p className="text-xs text-muted-foreground">Voici votre pass unique officiel généré pour l'entrée au festival :</p>
+                  
+                  {/* Visual Souvenir ticket card layout */}
+                  <div className="bg-white text-black p-4 rounded-xl space-y-3 shadow-2xl relative text-left">
+                    <div className="flex justify-between items-start border-b border-neutral-200 pb-2">
+                      <div>
+                        <div className="text-[10px] font-black tracking-widest text-primary uppercase">ONE VIBE FEST</div>
+                        <div className="text-[14px] font-black uppercase">{formData.name}</div>
+                      </div>
+                      <span className="text-[9px] bg-black text-white px-2 py-0.5 rounded font-mono font-bold">
+                        PASS {formData.passCategory}
+                      </span>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Mode de paiement local</label>
-                      <Select value={formData.paymentMethod} onValueChange={handleSelectPayment}>
-                        <SelectTrigger className="bg-black border-white/10 h-11 text-sm rounded-xl">
-                          <SelectValue placeholder="Méthode" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-neutral-900 border-white/10 text-white">
-                          <SelectItem value="MOBILE_MONEY">Mobile Money (M-Pesa, Orange, Airtel)</SelectItem>
-                          <SelectItem value="CARD">Carte Bancaire / Visa / Mastercard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl text-[11px] text-muted-foreground">
-                      Montant total dû : <span className="text-white font-bold">{formData.passCategory === 'VIP' ? '30.000 FC' : '10.000 FC'}</span>. Le paiement sera initié après confirmation.
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3 h-11 border-white/10 text-white text-xs">RETOUR</Button>
-                      <Button type="submit" className="w-2/3 h-11 bg-secondary text-black font-black rounded-xl text-xs uppercase">CONFIRMER & PAYER</Button>
+                    <div className="flex gap-3 items-center pt-1">
+                      <div className="p-2 border-2 border-black rounded bg-neutral-50 shrink-0">
+                        <QrCode className="w-14 h-14 text-black" />
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div className="font-mono font-bold text-neutral-800">{generatedTicket}</div>
+                        <div className="text-[10px] text-neutral-500 font-medium">Lieu : Palais des Congrès</div>
+                        <div className="text-[10px] text-neutral-500 font-medium">Date : Samedi 15 Juillet 2024</div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </form>
+
+                  <p className="text-[11px] text-muted-foreground">Une copie a été enregistrée dans la base de données. Vous pouvez également retrouver ce billet dans l'onglet <b>Billets & QR</b> du Dashboard Admin.</p>
+                  
+                  <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-bold uppercase text-xs rounded-xl h-11">
+                    Fermer et continuer
+                  </Button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
