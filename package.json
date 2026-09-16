@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss": "4.0.0",
+    "tailwindcss-animate": "^1.0.7",
     "firebase": "^11.9.1",
     "genkit": "^1.28.0",
     "@genkit-ai/google-genai": "^1.28.0",
