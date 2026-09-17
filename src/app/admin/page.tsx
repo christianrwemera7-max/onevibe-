@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('0994472599');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const festivalSettingsRef = useMemoFirebase(() => {
+  const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
   }, [firestore]);
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = () => {
-    if (!festivalSettingsRef) return;
+    if (!settingsRef) return;
     const data = {
       heroImageUrl: heroInput,
       ticketingUrl: ticketingInput,
@@ -139,11 +139,11 @@ export default function AdminDashboard() {
       digitalImg,
       updatedAt: new Date().toISOString()
     };
-    setDoc(festivalSettingsRef, data, { merge: true }).then(() => {
+    setDoc(settingsRef, data, { merge: true }).then(() => {
       toast({ title: "Configuration et Univers enregistrés avec succès" });
     }).catch(err => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: festivalSettingsRef.path,
+        path: settingsRef.path,
         operation: OperationType.UPDATE,
         requestResourceData: data
       }, err));
@@ -195,7 +195,6 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Préparation des données CSV (Inscriptions accès site + Stands + Pass)
     const headers = ["Nom", "Email", "Téléphone", "Type", "Code Billet/Accès", "Date Inscription"];
     const sortedRegistrations = [...registrations].sort((a, b) => 
       new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
