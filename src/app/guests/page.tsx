@@ -40,7 +40,7 @@ export default function TalentsPage() {
           <div className="w-16 h-1 bg-primary/20 mx-auto mt-6 rounded-full" />
         </div>
 
-        {/* Bouton de conversion rapide supérieur */}
+        {/* Bouton de conversion unique de tête */}
         <div className="mb-16 text-center">
           <Button asChild size="default" className="bg-primary text-white font-black text-[10px] uppercase h-12 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
             <a href={ticketingUrl} target="_blank">
@@ -97,23 +97,10 @@ export default function TalentsPage() {
         })}
 
         {(!talents || talents.length === 0) && (
-          <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/5 border-dashed mb-16">
+          <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/5 border-dashed">
             <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest italic">Annonce des premiers talents très prochainement...</p>
           </div>
         )}
-
-        {/* Section de conversion finale en bas de page */}
-        <div className="mt-20">
-          <Card className="p-12 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20 rounded-[3rem] text-center max-w-4xl mx-auto">
-            <h3 className="text-[20px] font-black uppercase text-white mb-4 italic">VENEZ RENCONTRER VOS IDOLES</h3>
-            <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-8 italic">Prenez vos places dès maintenant pour garantir votre accès aux zones VIP et dédicaces.</p>
-            <Button asChild size="lg" className="bg-primary text-white font-black text-[10px] uppercase h-16 px-12 rounded-full tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 transition-all">
-              <a href={ticketingUrl} target="_blank">
-                <Ticket className="w-4 h-4 mr-2" /> RÉSERVER MON BILLET DE SUITE
-              </a>
-            </Button>
-          </Card>
-        </div>
       </div>
     </div>
   );

@@ -34,8 +34,8 @@ export default function DigitalUniversePage() {
             <ArrowLeft className="w-4 h-4" /> Retour aux univers
           </Link>
           
-          <Button asChild size="sm" className="bg-primary text-white font-black text-[9px] uppercase tracking-widest h-9 px-4 rounded-full">
-            <a href={ticketingUrl} target="_blank"><Ticket className="w-3.5 h-3.5 mr-1" /> RÉSERVER CET UNIVERS</a>
+          <Button asChild size="sm" className="bg-primary text-white font-black text-[9px] uppercase tracking-widest h-9 px-4 rounded-full shadow-lg shadow-primary/20">
+            <a href={ticketingUrl} target="_blank"><Ticket className="w-3.5 h-3.5 mr-1" /> RÉSERVER MON PASS DIGITAL</a>
           </Button>
         </div>
 
@@ -68,15 +68,6 @@ export default function DigitalUniversePage() {
               </Card>
             ))}
           </div>
-        </div>
-
-        {/* Section de conversion inférieure de l'univers */}
-        <div className="pt-8 text-center">
-          <Button asChild size="lg" className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-            <a href={ticketingUrl} target="_blank">
-              <Ticket className="w-4 h-4 mr-2" /> ACCÉDER À VIBE DIGITAL (PRENDRE MON PASS)
-            </a>
-          </Button>
         </div>
       </div>
     </div>

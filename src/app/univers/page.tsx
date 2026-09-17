@@ -69,8 +69,8 @@ export default function UniversPage() {
           <div className="w-16 h-1 bg-primary mx-auto mt-6 rounded-full" />
         </div>
 
-        {/* Bannière de conversion supérieure rapide */}
-        <div className="mb-12 text-center">
+        {/* Bannière de conversion unique supérieure rapide */}
+        <div className="mb-16 text-center">
           <Button asChild size="default" className="bg-primary text-white font-black text-[10px] uppercase h-12 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
             <a href={ticketingUrl} target="_blank">
               <Ticket className="w-4 h-4 mr-2" /> RÉSERVER MON BILLET ACCÈS DIRECT
@@ -109,18 +109,6 @@ export default function UniversPage() {
               </Card>
             </Link>
           ))}
-        </div>
-
-        <div className="mt-24 text-center">
-          <Card className="p-12 bg-primary/10 border-primary/20 rounded-[3rem] relative overflow-hidden text-white border max-w-4xl mx-auto">
-            <h2 className="text-[20px] font-black uppercase italic mb-6">VOTRE IMMERSION COMMENCE ICI</h2>
-            <p className="text-[11px] text-muted-foreground mb-8 uppercase tracking-wider italic font-bold">Ne manquez pas l'édition 2027. Les places sont limitées.</p>
-            <Button asChild size="lg" className="h-16 px-12 text-[10px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:scale-105 transition-all">
-              <a href={ticketingUrl} target="_blank">
-                <Ticket className="w-4 h-4 mr-2" /> RÉSERVER MON BILLET NOW
-              </a>
-            </Button>
-          </Card>
         </div>
       </div>
     </div>
