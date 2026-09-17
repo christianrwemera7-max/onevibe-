@@ -1,11 +1,12 @@
-
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { Clock } from 'lucide-react';
+import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Clock, Ticket } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const defaultProgram = [
   { time: "12:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques." },
@@ -24,6 +25,14 @@ export default function ProgrammePage() {
   }, [firestore]);
   const { data: dynamicProgram } = useCollection(programCollectionRef);
 
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+  
+  const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
+
   const activeProgram = dynamicProgram && dynamicProgram.length > 0 
     ? [...dynamicProgram].sort((a,b) => a.time.localeCompare(b.time)) 
     : defaultProgram;
@@ -31,13 +40,22 @@ export default function ProgrammePage() {
   return (
     <div className="pt-32 pb-20 bg-neutral-950">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-24">
+        <div className="text-center mb-16">
           <h1 className="text-[25px] font-black tracking-tighter uppercase italic mb-4">LE FLOW</h1>
           <p className="text-[10px] text-muted-foreground uppercase tracking-[0.5em] font-bold italic">Le timing millimétré du 26 Juin 2027</p>
           <div className="w-16 h-1 bg-primary mx-auto mt-6 rounded-full" />
         </div>
 
-        <div className="space-y-12 relative">
+        {/* CTA Conversion de tête */}
+        <div className="mb-16 text-center">
+          <Button asChild className="bg-primary text-white font-black text-[10px] uppercase h-14 px-10 rounded-full tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+            <a href={ticketingUrl} target="_blank">
+              <Ticket className="w-4 h-4 mr-2" /> RÉSERVER MON BILLET POUR LE SHOW
+            </a>
+          </Button>
+        </div>
+
+        <div className="space-y-12 relative mb-20">
           <div className="absolute left-[20px] top-0 bottom-0 w-px bg-white/10 md:left-1/2 md:-translate-x-1/2" />
           
           {activeProgram.map((item, idx) => (
@@ -66,6 +84,17 @@ export default function ProgrammePage() {
             </motion.div>
           ))}
         </div>
+
+        {/* Section de conversion inférieure */}
+        <Card className="p-10 bg-white/5 border-white/10 rounded-[2.5rem] text-center max-w-2xl mx-auto backdrop-blur-xl">
+          <h3 className="text-[18px] font-black uppercase text-white mb-3 italic">NE MANQUEZ AUCUNE SECONDE</h3>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-6 italic">Vivez l'expérience ONE VIBE FEST 2027 en première ligne.</p>
+          <Button asChild size="lg" className="bg-primary text-white font-black text-[10px] uppercase h-14 px-10 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+            <a href={ticketingUrl} target="_blank">
+              <Ticket className="w-4 h-4 mr-2" /> RÉSERVER MON BILLET MAINTENANT
+            </a>
+          </Button>
+        </Card>
       </div>
     </div>
   );

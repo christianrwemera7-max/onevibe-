@@ -1,11 +1,13 @@
-
 "use client";
 
 import React from 'react';
-import { Gamepad2, ArrowLeft, Trophy, Cpu, Smartphone, Monitor } from 'lucide-react';
+import { Gamepad2, ArrowLeft, Trophy, Cpu, Smartphone, Monitor, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
 
 const activities = [
   { title: "E-Sports Major Arena", time: "14:00 - 19:30", desc: "La grande arène e-sport avec écran géant pour les phases finales sur les jeux les plus compétitifs.", icon: <Trophy className="w-5 h-5 text-secondary" /> },
@@ -15,12 +17,27 @@ const activities = [
 ];
 
 export default function DigitalUniversePage() {
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
+  const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
+
   return (
     <div className="pt-32 pb-20 bg-neutral-950 min-h-screen text-white">
       <div className="max-w-4xl mx-auto px-4 space-y-12">
-        <Link href="/univers" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Retour aux univers
-        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Link href="/univers" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Retour aux univers
+          </Link>
+          
+          <Button asChild size="sm" className="bg-primary text-white font-black text-[9px] uppercase tracking-widest h-9 px-4 rounded-full">
+            <a href={ticketingUrl} target="_blank"><Ticket className="w-3.5 h-3.5 mr-1" /> RÉSERVER CET UNIVERS</a>
+          </Button>
+        </div>
 
         <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
           <Image src="https://picsum.photos/seed/digidet/1200/600" alt="Vibe Digital" fill className="object-cover brightness-90" data-ai-hint="gaming setup neon" />
@@ -51,6 +68,15 @@ export default function DigitalUniversePage() {
               </Card>
             ))}
           </div>
+        </div>
+
+        {/* Section de conversion inférieure de l'univers */}
+        <div className="pt-8 text-center">
+          <Button asChild size="lg" className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+            <a href={ticketingUrl} target="_blank">
+              <Ticket className="w-4 h-4 mr-2" /> ACCÉDER À VIBE DIGITAL (PRENDRE MON PASS)
+            </a>
+          </Button>
         </div>
       </div>
     </div>

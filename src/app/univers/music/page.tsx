@@ -1,13 +1,13 @@
-
 "use client";
 
 import React from 'react';
-import { Music, ArrowLeft, Disc, Mic2, Radio, Star } from 'lucide-react';
+import { Music, ArrowLeft, Disc, Mic2, Radio, Star, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
 
 const activities = [
   { title: "Main Stage Live Concerts", time: "19:00 - 22:00", desc: "Têtes d'affiches nationales et internationales sur une scène monumentale dotée d'effets visuels immersifs.", icon: <Star className="w-5 h-5 text-primary" /> },
@@ -25,13 +25,20 @@ export default function MusicUniversePage() {
   const { data: settings } = useDoc(settingsRef);
 
   const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+  const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
 
   return (
     <div className="pt-32 pb-20 bg-neutral-950 min-h-screen text-white">
       <div className="max-w-4xl mx-auto px-4 space-y-12">
-        <Link href="/univers" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Retour aux univers
-        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Link href="/univers" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Retour aux univers
+          </Link>
+          
+          <Button asChild size="sm" className="bg-primary text-white font-black text-[9px] uppercase tracking-widest h-9 px-4 rounded-full">
+            <a href={ticketingUrl} target="_blank"><Ticket className="w-3. h-3.5 mr-1" /> RÉSERVER CET UNIVERS</a>
+          </Button>
+        </div>
 
         <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
           <Image 
@@ -68,6 +75,15 @@ export default function MusicUniversePage() {
               </Card>
             ))}
           </div>
+        </div>
+
+        {/* Section de conversion inférieure de l'univers */}
+        <div className="pt-8 text-center">
+          <Button asChild size="lg" className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+            <a href={ticketingUrl} target="_blank">
+              <Ticket className="w-4 h-4 mr-2" /> ACCÉDER À VIBE MUSIC (PRENDRE MON PASS)
+            </a>
+          </Button>
         </div>
       </div>
     </div>
