@@ -57,7 +57,7 @@ export default function TalentsPage() {
                           src={talent.imageUrl} 
                           alt={talent.name} 
                           fill 
-                          className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
                           data-ai-hint="portrait artist festival"
                         />
                       ) : (

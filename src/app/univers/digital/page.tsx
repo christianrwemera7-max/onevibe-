@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -22,13 +23,13 @@ export default function DigitalUniversePage() {
         </Link>
 
         <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-          <Image src="https://picsum.photos/seed/digidet/1200/600" alt="Vibe Digital" fill className="object-cover brightness-75" data-ai-hint="gaming setup neon" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <Image src="https://picsum.photos/seed/digidet/1200/600" alt="Vibe Digital" fill className="object-cover brightness-90" data-ai-hint="gaming setup neon" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/20 text-secondary border border-secondary/30 text-[9px] font-black uppercase tracking-widest rounded-full">
               <Gamepad2 className="w-3 h-3" /> TECHNOLOGIE & GAMING
             </div>
-            <h1 className="text-[25px] font-black uppercase italic">VIBE DIGITAL</h1>
+            <h1 className="text-[25px] font-black uppercase italic drop-shadow-xl">VIBE DIGITAL</h1>
           </div>
         </div>
 

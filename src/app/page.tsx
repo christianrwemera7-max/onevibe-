@@ -144,25 +144,25 @@ export default function LandingPage() {
             src={isValidUrl(settings?.heroImageUrl) ? settings!.heroImageUrl : "https://picsum.photos/seed/vibe1/1920/1080"} 
             alt="Hero" 
             fill 
-            className="object-cover opacity-30 grayscale brightness-75" 
+            className="object-cover opacity-50 brightness-90" 
             priority 
             data-ai-hint="stadium concert lights" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 w-full relative z-10 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-[9px] font-black uppercase tracking-[0.4em] text-white">
+            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl text-[9px] font-black uppercase tracking-[0.4em] text-white">
               <Zap className="w-4 h-4 text-primary" /> 26 JUIN 2027 • INEPSS • KINSHASA
             </div>
             
-            <h1 className="text-[25px] font-black leading-tight tracking-tighter uppercase italic text-white">
+            <h1 className="text-[25px] font-black leading-tight tracking-tighter uppercase italic text-white drop-shadow-2xl">
               UNE ÉNERGIE <br />
               <span className="text-primary">MULTIDIMENSIONNELLE</span>
             </h1>
             
-            <p className="max-w-xl mx-auto text-white/50 text-[10px] uppercase font-black tracking-[0.5em] italic leading-relaxed">
+            <p className="max-w-xl mx-auto text-white text-[10px] uppercase font-black tracking-[0.5em] italic leading-relaxed drop-shadow-lg">
               Musique • Design • Business • Digital
             </p>
 
@@ -172,7 +172,7 @@ export default function LandingPage() {
                   BILLETTERIE <ExternalLink className="ml-3 w-4 h-4" />
                 </a>
               </Button>
-              <Link href="/univers" className="group flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white transition-all">
+              <Link href="/univers" className="group flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-white hover:text-primary transition-all">
                 EXPLORER <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
               </Link>
             </div>

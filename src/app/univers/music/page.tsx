@@ -38,15 +38,15 @@ export default function MusicUniversePage() {
             src={isValidUrl(settings?.musicImg) ? settings!.musicImg : "https://picsum.photos/seed/musdet/1200/600"} 
             alt="Vibe Music" 
             fill 
-            className="object-cover brightness-75" 
+            className="object-cover brightness-90" 
             data-ai-hint="concert crowd neon" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest rounded-full">
               <Music className="w-3 h-3" /> DIMENSION SONORE
             </div>
-            <h1 className="text-[25px] font-black uppercase italic">VIBE MUSIC</h1>
+            <h1 className="text-[25px] font-black uppercase italic drop-shadow-xl">VIBE MUSIC</h1>
           </div>
         </div>
 

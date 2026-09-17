@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -22,13 +23,13 @@ export default function CreativeUniversePage() {
         </Link>
 
         <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-          <Image src="https://picsum.photos/seed/creadet/1200/600" alt="Vibe Creative" fill className="object-cover brightness-75" data-ai-hint="fashion runway streetart" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <Image src="https://picsum.photos/seed/creadet/1200/600" alt="Vibe Creative" fill className="object-cover brightness-90" data-ai-hint="fashion runway streetart" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent border border-accent/30 text-[9px] font-black uppercase tracking-widest rounded-full">
               <Palette className="w-3 h-3" /> ART & DESIGN
             </div>
-            <h1 className="text-[25px] font-black uppercase italic">VIBE CREATIVE</h1>
+            <h1 className="text-[25px] font-black uppercase italic drop-shadow-xl">VIBE CREATIVE</h1>
           </div>
         </div>
 

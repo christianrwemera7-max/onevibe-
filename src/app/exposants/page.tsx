@@ -100,16 +100,16 @@ export default function ExposantsPage() {
               src="https://picsum.photos/seed/market1/800/1000" 
               alt="Exposant" 
               fill 
-              className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105" 
+              className="object-cover transition-all duration-700 group-hover:scale-105" 
               data-ai-hint="exhibition stand festival" 
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-8 left-8 right-8 p-8 bg-black/60 backdrop-blur-2xl rounded-[2rem] border border-white/10">
               <div className="flex items-center gap-4 mb-3">
                 <Zap className="w-5 h-5 text-secondary" />
                 <h3 className="text-[18px] font-black text-white uppercase italic">Impact VIBE</h3>
               </div>
-              <p className="text-[10px] text-white/70 font-black uppercase tracking-widest leading-relaxed italic">Boostez votre business dans l'écosystème le plus dynamique de Kinshasa.</p>
+              <p className="text-[10px] text-white/90 font-black uppercase tracking-widest leading-relaxed italic">Boostez votre business dans l'écosystème le plus dynamique de Kinshasa.</p>
             </div>
           </div>
         </div>
