@@ -64,11 +64,20 @@ export default function ExplorePage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-12"
             >
-              <div className="inline-flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-[0.3em] mb-4">
+              <div className="inline-flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-[0.3em] mb-6">
                 <Sparkles className="w-4 h-4" /> IMMERSION TOTALE
               </div>
-              <h1 className="text-[25px] font-black uppercase italic mb-4 tracking-tighter text-white">TEASER OFFICIEL DE {settings?.eventName || 'ONE VIBE FEST'}</h1>
-              <div className="w-16 h-1 bg-primary/20 mx-auto mt-6 rounded-full" />
+              
+              <h1 className="flex flex-col items-center leading-[0.85] mb-8">
+                <span className="text-[40px] md:text-[70px] font-black uppercase italic tracking-tighter text-white">
+                  TEASER <span className="text-primary">OFFICIEL</span>
+                </span>
+                <span className="text-[14px] md:text-[20px] font-black uppercase tracking-[0.5em] text-white/30 mt-2 italic">
+                  {settings?.eventName || 'ONE VIBE FEST'}
+                </span>
+              </h1>
+              
+              <div className="w-16 h-1 bg-primary/40 mx-auto rounded-full" />
             </motion.div>
 
             <motion.div 
