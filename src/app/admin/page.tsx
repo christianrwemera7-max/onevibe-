@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle, Info, Upload, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle, Info, Upload, Loader2, Download } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -189,6 +189,37 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleExportCSV = () => {
+    if (!registrations || registrations.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Aucune donnée de réservation à exporter." });
+      return;
+    }
+
+    const headers = ["Nom", "Email", "Téléphone", "Type", "Catégorie", "Entreprise", "Code Billet", "Date Création"];
+    const rows = registrations.map(reg => [
+      `"${reg.name || ''}"`,
+      `"${reg.email || ''}"`,
+      `"${reg.phone || ''}"`,
+      `"${reg.type || ''}"`,
+      `"${reg.passCategory || ''}"`,
+      `"${reg.company || ''}"`,
+      `"${reg.ticketCode || ''}"`,
+      `"${reg.createdAt || ''}"`
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `one-vibe-registrations-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "Export réussi", description: "Le fichier CSV a été téléchargé." });
+  };
+
   if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest italic">Chargement du cockpit...</div>;
 
   if (!user || user.email !== 'christianrwemera4@gmail.com') {
@@ -237,8 +268,11 @@ export default function AdminDashboard() {
 
           <TabsContent value="tickets">
             <Card className="bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
-              <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+              <CardHeader className="border-b border-white/5 bg-white/[0.02] flex flex-row items-center justify-between">
                 <CardTitle className="text-[14px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Réservations Enregistrées</CardTitle>
+                <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] font-black uppercase tracking-widest h-9 rounded-xl hover:bg-white/10 transition-all">
+                  <Download className="w-3 h-3 mr-2" /> Exporter (CSV)
+                </Button>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
