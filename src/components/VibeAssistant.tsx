@@ -1,9 +1,8 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { Sparkles, X, Send, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { askVibeAssistant } from '@/ai/flows/vibe-assistant-flow';
@@ -15,7 +14,12 @@ export function VibeAssistant() {
     { role: 'bot', text: "Salut ! Je suis l'assistant VIBE. Prêt pour l'expérience 2027 ? Pose-moi tes questions sur le festival !" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,9 +45,10 @@ export function VibeAssistant() {
     }
   };
 
+  if (!mounted) return null;
+
   return (
     <>
-      {/* Bouton Flottant */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -61,7 +66,6 @@ export function VibeAssistant() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-24 right-8 z-[90] w-[350px] max-w-[90vw] h-[500px] bg-neutral-900 border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl"
           >
-            {/* Header */}
             <div className="p-6 bg-primary/10 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
@@ -75,7 +79,6 @@ export function VibeAssistant() {
               <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -102,7 +105,6 @@ export function VibeAssistant() {
               )}
             </div>
 
-            {/* Input */}
             <div className="p-4 border-t border-white/5 bg-black/40">
               <div className="flex gap-2">
                 <Input
