@@ -1,43 +1,48 @@
 
-# ONE VIBE FEST - Site Officiel
+# ONE VIBE FEST - Plateforme Officielle
 
-Ce projet est le site web officiel de **ONE VIBE FEST**, une plateforme multidisciplinaire célébrant la musique, la créativité et le numérique à Kinshasa.
+Bienvenue sur le dépôt officiel de **ONE VIBE FEST**, l'événement multidisciplinaire de référence célébrant la musique, la créativité et le numérique à Kinshasa.
 
-## 🚀 Technologies utilisées
-- **Framework** : Next.js 15 (App Router)
-- **Styling** : Tailwind CSS, Framer Motion, ShadCN UI
-- **Backend** : Firebase (Firestore, Auth)
-- **AI** : Genkit (Vibe Assistant)
-- **Media** : Cloudinary (Upload images admin)
+## 🚀 Vision du Projet
+Cette application est conçue pour offrir une immersion totale dans l'univers du festival. Elle permet aux visiteurs d'explorer le programme, de découvrir les artistes (Guests) et de réserver leurs accès, tandis que les organisateurs disposent d'un cockpit d'administration complet.
 
-## 📁 Dépôt GitHub
-Retrouvez le code source sur GitHub : [https://github.com/christianrwemera7-max/onevibe-.git](https://github.com/christianrwemera7-max/onevibe-.git)
+## 🛠 Stack Technique
+- **Frontend** : [Next.js 15](https://nextjs.org/) (App Router, Turbopack)
+- **Styling** : [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/)
+- **Backend** : [Firebase](https://firebase.google.com/) (Firestore, Authentication)
+- **IA** : [Genkit](https://firebase.google.com/docs/genkit) (Assistant Vibe intelligent)
+- **Médias** : [Cloudinary](https://cloudinary.com/) (Gestion dynamique des images)
 
-## 🛠 Installation & Développement
-1. Clonez le dépôt :
+## 🔐 Administration
+L'accès au Cockpit Admin (`/admin`) est sécurisé et réservé à l'adresse autorisée. Il permet de modifier en temps réel :
+- L'identité visuelle (nom, slogan, logo)
+- Les réseaux sociaux (Instagram, Twitter, Facebook, TikTok)
+- La programmation chronologique
+- La liste des talents et invités
+
+## 📦 Installation & Déploiement
+
+### Local
+1. Cloner le dépôt :
    ```bash
    git clone https://github.com/christianrwemera7-max/onevibe-.git
    ```
-2. Installez les dépendances :
+2. Installer les dépendances :
    ```bash
    npm install
    ```
-3. Configurez vos variables d'environnement (.env)
-4. Lancez le serveur de développement :
+3. Lancer le serveur :
    ```bash
    npm run dev
    ```
 
-## 🔐 Administration
-L'accès au **Cockpit Admin** (`/admin`) est réservé aux emails autorisés (ex: christianrwemera4@gmail.com). Il permet de piloter l'intégralité de l'identité du festival, les réseaux sociaux, les guests et le programme.
-
-## 📡 Déploiement Git (Initialisation)
-Si vous souhaitez pousser ce projet vers un nouveau dépôt :
+### Déploiement Git
+Pour envoyer vos modifications vers GitHub, utilisez les commandes suivantes :
 ```bash
-git init
 git add .
-git commit -m "Initial commit - Site Officiel One Vibe"
-git branch -M main
-git remote add origin https://github.com/christianrwemera7-max/onevibe-.git
-git push -u origin main
+git commit -m "Mise à jour : [votre message]"
+git push origin main
 ```
+
+---
+© 2027 ONE VIBE FEST • KINSHASA VIBE
