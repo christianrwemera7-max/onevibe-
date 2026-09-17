@@ -3,8 +3,8 @@
 import cloudinary from '@/lib/cloudinary';
 
 /**
- * Server Action pour téléverser une image sur Cloudinary de manière stable.
- * Gère automatiquement le format de fichier grâce à resource_type: 'auto'.
+ * Server Action pour téléverser une image sur Cloudinary.
+ * Accepte tous les formats grâce à resource_type: 'auto' et transforme en formats web modernes.
  */
 export async function uploadToCloudinary(formData: FormData) {
   const file = formData.get('file') as File;
@@ -14,11 +14,6 @@ export async function uploadToCloudinary(formData: FormData) {
     throw new Error('Aucun fichier fourni');
   }
 
-  // Vérification basique du type de fichier
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Le fichier doit être une image');
-  }
-
   // Conversion du fichier en buffer pour l'upload
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -26,9 +21,9 @@ export async function uploadToCloudinary(formData: FormData) {
   return new Promise<{ url: string }>((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        resource_type: 'auto',
+        resource_type: 'auto', // Gère images, vidéos et fichiers bruts
         folder: `one-vibe/${folder}`,
-        // Optimisation automatique de la qualité et du format
+        // Optimisation automatique vers WebP/AVIF selon le navigateur
         fetch_format: 'auto',
         quality: 'auto',
       },

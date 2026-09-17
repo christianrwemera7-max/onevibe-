@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -144,7 +143,7 @@ export default function AdminDashboard() {
     try {
       const result = await uploadToCloudinary(formData);
       setter(result.url);
-      toast({ title: "Image importée", description: "Le fichier a été stabilisé sur Cloudinary." });
+      toast({ title: "Fichier importé", description: "Le média a été stabilisé sur Cloudinary." });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur d'import", description: error.message });
     } finally {
