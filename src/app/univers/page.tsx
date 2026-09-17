@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -47,6 +48,19 @@ export default function UniversPage() {
   
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
 
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+
+  const getUniverseImage = (id: string, defaultImg: string) => {
+    if (!settings) return defaultImg;
+    const customImg = settings[`${id}Img`];
+    return isValidUrl(customImg) ? customImg : defaultImg;
+  };
+
+  const getUniverseDesc = (id: string, defaultDesc: string) => {
+    if (!settings) return defaultDesc;
+    return settings[`${id}Desc`] || defaultDesc;
+  };
+
   return (
     <div className="pt-32 pb-20 bg-neutral-950 min-h-screen">
       <div className="max-w-7xl mx-auto px-4">
@@ -63,7 +77,7 @@ export default function UniversPage() {
                 <div className="space-y-6">
                   <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden">
                     <Image 
-                      src={uni.image} 
+                      src={getUniverseImage(uni.id, uni.image)} 
                       alt={uni.title} 
                       fill 
                       className="object-cover transition-transform duration-700 group-hover:scale-105" 
@@ -78,7 +92,7 @@ export default function UniversPage() {
                       {uni.title}
                       <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                     </h2>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed italic opacity-80">{uni.description}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed italic opacity-80">{getUniverseDesc(uni.id, uni.description)}</p>
                   </div>
                 </div>
                 <div className="mt-6 text-[9px] font-black text-primary uppercase tracking-widest italic group-hover:underline">

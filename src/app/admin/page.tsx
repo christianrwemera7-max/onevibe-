@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -10,10 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -60,7 +62,6 @@ export default function AdminDashboard() {
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
   
-  // Custom texts for the 3 universes editable from the cockpit
   const [musicDesc, setMusicDesc] = useState('');
   const [musicImg, setMusicImg] = useState('');
   const [creativeDesc, setCreativeDesc] = useState('');
@@ -193,6 +194,14 @@ export default function AdminDashboard() {
           <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Quitter</Button>
         </div>
 
+        <Alert className="bg-amber-900/20 border-amber-900/30 text-amber-200 mb-8 rounded-2xl">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-xs font-black uppercase tracking-widest italic">Note Importante sur les Images</AlertTitle>
+          <AlertDescription className="text-[10px] uppercase font-bold tracking-wider italic leading-relaxed">
+            Utilisez uniquement des liens web (ex: https://...) pour les images. Les chemins locaux (ex: C:\Users\...) ne fonctionneront pas sur le site.
+          </AlertDescription>
+        </Alert>
+
         <Tabs defaultValue="tickets" className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
             <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Stands & Pass</TabsTrigger>
@@ -245,7 +254,6 @@ export default function AdminDashboard() {
               <h3 className="text-[12px] font-black uppercase tracking-widest italic border-b border-white/5 pb-2">Contenu des 3 Univers Thématiques</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Univers Musique */}
                 <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                   <div className="text-xs font-black text-primary uppercase">1. VIBE MUSIC</div>
                   <div className="space-y-2">
@@ -253,12 +261,11 @@ export default function AdminDashboard() {
                     <textarea value={musicDesc} onChange={e => setMusicDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (https://...)</label>
                     <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
                   </div>
                 </div>
 
-                {/* Univers Créatif */}
                 <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                   <div className="text-xs font-black text-accent uppercase">2. VIBE CREATIVE</div>
                   <div className="space-y-2">
@@ -266,12 +273,11 @@ export default function AdminDashboard() {
                     <textarea value={creativeDesc} onChange={e => setCreativeDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (https://...)</label>
                     <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
                   </div>
                 </div>
 
-                {/* Univers Digital */}
                 <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                   <div className="text-xs font-black text-secondary uppercase">3. VIBE DIGITAL</div>
                   <div className="space-y-2">
@@ -279,7 +285,7 @@ export default function AdminDashboard() {
                     <textarea value={digitalDesc} onChange={e => setDigitalDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (https://...)</label>
                     <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
                   </div>
                 </div>
@@ -301,7 +307,7 @@ export default function AdminDashboard() {
                     <option value="CREATIVE">CRÉATIF</option>
                     <option value="DIGITAL">DIGITAL</option>
                   </select>
-                  <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="Lien image de votre stockage" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="URL Image (https://...)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
                 </form>
               </Card>
@@ -341,7 +347,7 @@ export default function AdminDashboard() {
                   <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description textuelle" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="Lien image" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="URL Image (https://...)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter à l'agenda</Button>
                 </form>
               </Card>
@@ -375,8 +381,8 @@ export default function AdminDashboard() {
               <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Configuration Globale & Médias</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO (URL)</label>
-                  <Input placeholder="Lien de l'image d'accueil principale" value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO (URL HTTPS)</label>
+                  <Input placeholder="https://lien-image-web.com/img.jpg" value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
                 </div>
                 <div>
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN BILLETTERIE EXTERNE (OMT EVENTS)</label>

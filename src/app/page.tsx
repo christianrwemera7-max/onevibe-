@@ -45,6 +45,8 @@ export default function LandingPage() {
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
   const teaserUrl = settings?.teaserUrl;
 
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+
   const getYoutubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url?.match(regExp);
@@ -139,7 +141,7 @@ export default function LandingPage() {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
-            src={settings?.heroImageUrl || "https://picsum.photos/seed/vibe1/1920/1080"} 
+            src={isValidUrl(settings?.heroImageUrl) ? settings!.heroImageUrl : "https://picsum.photos/seed/vibe1/1920/1080"} 
             alt="Hero" 
             fill 
             className="object-cover opacity-30 grayscale brightness-75" 

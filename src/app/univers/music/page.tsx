@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,6 +6,8 @@ import { Music, ArrowLeft, Disc, Mic2, Radio, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 const activities = [
   { title: "Main Stage Live Concerts", time: "19:00 - 22:00", desc: "Têtes d'affiches nationales et internationales sur une scène monumentale dotée d'effets visuels immersifs.", icon: <Star className="w-5 h-5 text-primary" /> },
@@ -14,6 +17,15 @@ const activities = [
 ];
 
 export default function MusicUniversePage() {
+  const firestore = useFirestore();
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+
   return (
     <div className="pt-32 pb-20 bg-neutral-950 min-h-screen text-white">
       <div className="max-w-4xl mx-auto px-4 space-y-12">
@@ -22,7 +34,13 @@ export default function MusicUniversePage() {
         </Link>
 
         <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-          <Image src="https://picsum.photos/seed/musdet/1200/600" alt="Vibe Music" fill className="object-cover brightness-75" data-ai-hint="concert crowd neon" />
+          <Image 
+            src={isValidUrl(settings?.musicImg) ? settings!.musicImg : "https://picsum.photos/seed/musdet/1200/600"} 
+            alt="Vibe Music" 
+            fill 
+            className="object-cover brightness-75" 
+            data-ai-hint="concert crowd neon" 
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest rounded-full">
