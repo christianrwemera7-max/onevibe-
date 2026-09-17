@@ -24,6 +24,7 @@ export default function DigitalUniversePage() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
 
   return (
@@ -39,8 +40,13 @@ export default function DigitalUniversePage() {
           </Button>
         </div>
 
-        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-          <Image src="https://picsum.photos/seed/digidet/1200/600" alt="Vibe Digital" fill className="object-cover brightness-90" data-ai-hint="gaming setup neon" />
+        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900">
+          <Image 
+            src={isValidUrl(settings?.digitalImg) ? settings!.digitalImg : "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200"} 
+            alt="Vibe Digital" 
+            fill 
+            className="object-cover brightness-90" 
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/20 text-secondary border border-secondary/30 text-[9px] font-black uppercase tracking-widest rounded-full">

@@ -40,13 +40,12 @@ export default function MusicUniversePage() {
           </Button>
         </div>
 
-        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
+        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900">
           <Image 
-            src={isValidUrl(settings?.musicImg) ? settings!.musicImg : "https://picsum.photos/seed/musdet/1200/600"} 
+            src={isValidUrl(settings?.musicImg) ? settings!.musicImg : "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=1200"} 
             alt="Vibe Music" 
             fill 
             className="object-cover brightness-90" 
-            data-ai-hint="concert crowd neon" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">

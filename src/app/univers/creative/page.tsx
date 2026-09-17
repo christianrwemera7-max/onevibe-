@@ -24,6 +24,7 @@ export default function CreativeUniversePage() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
 
   return (
@@ -39,8 +40,13 @@ export default function CreativeUniversePage() {
           </Button>
         </div>
 
-        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-          <Image src="https://picsum.photos/seed/creadet/1200/600" alt="Vibe Creative" fill className="object-cover brightness-90" data-ai-hint="fashion runway streetart" />
+        <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900">
+          <Image 
+            src={isValidUrl(settings?.creativeImg) ? settings!.creativeImg : "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=1200"} 
+            alt="Vibe Creative" 
+            fill 
+            className="object-cover brightness-90" 
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent border border-accent/30 text-[9px] font-black uppercase tracking-widest rounded-full">

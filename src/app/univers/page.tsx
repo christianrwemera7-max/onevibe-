@@ -16,24 +16,21 @@ const activeUniverses = [
     title: "VIBE MUSIC",
     icon: <Music className="w-6 h-6 text-primary" />,
     description: "Le cœur battant du festival. Des concerts explosifs, des DJ sets hypnotiques et des têtes d'affiches uniques.",
-    image: "https://picsum.photos/seed/music1/800/1000",
-    imageHint: "concert stage"
+    image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=800",
   },
   {
     id: "creative",
     title: "VIBE CREATIVE",
     icon: <Palette className="w-6 h-6 text-accent" />,
     description: "L'art sous toutes ses formes. Mode underground, design futuriste, street-art en direct et galeries éphémères.",
-    image: "https://picsum.photos/seed/art1/800/1000",
-    imageHint: "street art fashion"
+    image: "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=800",
   },
   {
     id: "digital",
     title: "VIBE DIGITAL",
     icon: <Gamepad2 className="w-6 h-6 text-secondary" />,
     description: "Technologie avancée et divertissement numérique. Tournois e-sport majeurs et expériences VR/AR.",
-    image: "https://picsum.photos/seed/digi1/800/1000",
-    imageHint: "gaming technology"
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
   }
 ];
 
@@ -69,7 +66,6 @@ export default function UniversPage() {
           <div className="w-16 h-1 bg-primary mx-auto mt-6 rounded-full" />
         </div>
 
-        {/* Bannière de conversion unique supérieure rapide */}
         <div className="mb-16 text-center">
           <Button asChild size="default" className="bg-primary text-white font-black text-[10px] uppercase h-12 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
             <a href={ticketingUrl} target="_blank">
@@ -83,13 +79,12 @@ export default function UniversPage() {
             <Link key={uni.id} href={`/univers/${uni.id}`} className="group block">
               <Card className="bg-white/5 border-white/5 rounded-[2.5rem] overflow-hidden p-6 hover:border-primary/40 transition-all hover:-translate-y-2 flex flex-col h-full justify-between">
                 <div className="space-y-6">
-                  <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden">
+                  <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden bg-neutral-900">
                     <Image 
                       src={getUniverseImage(uni.id, uni.image)} 
                       alt={uni.title} 
                       fill 
-                      className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                      data-ai-hint={uni.imageHint} 
+                      className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-80" 
                     />
                     <div className="absolute top-4 left-4 p-3 bg-black/60 backdrop-blur-md rounded-xl border border-white/10">
                       {uni.icon}
