@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Mail, Phone, MapPin, Globe, Instagram, Twitter, Facebook } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -18,6 +18,12 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 
 export function Footer() {
   const firestore = useFirestore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
@@ -33,6 +39,9 @@ export function Footer() {
   const tiktokUrl = settings?.tiktokUrl || '#';
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
+
+  // Évite les discordances d'hydratation dues aux dates système ou au chargement asynchrone initial
+  const currentYear = mounted ? new Date().getFullYear() : 2027;
 
   return (
     <footer className="pt-12 pb-8 border-t border-white/5 bg-black text-white relative overflow-hidden">
@@ -92,7 +101,7 @@ export function Footer() {
 
         <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.2em] italic">
-            © {new Date().getFullYear()} {eventName} FEST • TOUS DROITS RÉSERVÉS.
+            © {currentYear} {eventName} FEST • TOUS DROITS RÉSERVÉS.
           </div>
           <div className="flex items-center gap-1.5 text-[9px] font-black text-white/20 tracking-widest uppercase italic">
             <Globe className="w-3 h-3" /> KINSHASA VIBE
