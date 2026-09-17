@@ -24,6 +24,8 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { doc, collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Countdown } from '@/components/Countdown';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 
 export default function LandingPage() {
   const { user, isUserLoading } = useUser();
@@ -86,10 +88,11 @@ export default function LandingPage() {
     e.preventDefault();
     if (!auth || !firestore) return;
     setIsAuthPending(true);
+    
     try {
       if (authMode === 'SIGNUP') {
         const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        await addDoc(collection(firestore, 'registrations'), {
+        const regData = {
           userId: userCredential.user.uid,
           name: authData.name,
           email: authData.email,
@@ -97,7 +100,17 @@ export default function LandingPage() {
           type: 'PASS',
           createdAt: new Date().toISOString(),
           ticketCode: `MEMBER-${Math.floor(1000 + Math.random() * 9000)}`
+        };
+        
+        // Non-blocking Firestore write
+        addDoc(collection(firestore, 'registrations'), regData).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: 'registrations',
+            operation: OperationType.CREATE,
+            requestResourceData: regData
+          }, err));
         });
+        
         toast({ title: "Bienvenue !", description: "Compte créé." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);

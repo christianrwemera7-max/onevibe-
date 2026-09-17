@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -27,7 +28,7 @@ export default function ExposantsPage() {
     return collection(firestore, 'registrations');
   }, [firestore]);
 
-  const handleSubmitRegistration = async (e: React.FormEvent) => {
+  const handleSubmitRegistration = (e: React.FormEvent) => {
     e.preventDefault();
     if (!registrationsRef || !user) return;
 
@@ -42,18 +43,20 @@ export default function ExposantsPage() {
       createdAt: new Date().toISOString()
     };
 
-    try {
-      await addDoc(registrationsRef, submissionData);
-      setGeneratedTicket(uniqueTicketId);
-      setModalStep('TICKET');
-      toast({ title: "Demande envoyée !", description: "Votre dossier est en cours d'examen." });
-    } catch (error) {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: registrationsRef.path,
-        operation: OperationType.CREATE,
-        requestResourceData: submissionData,
-      }, error));
-    }
+    // Non-blocking mutation
+    addDoc(registrationsRef, submissionData)
+      .then(() => {
+        setGeneratedTicket(uniqueTicketId);
+        setModalStep('TICKET');
+        toast({ title: "Demande envoyée !", description: "Votre dossier est en cours d'examen." });
+      })
+      .catch((error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: registrationsRef.path,
+          operation: OperationType.CREATE,
+          requestResourceData: submissionData,
+        }, error));
+      });
   };
 
   return (
@@ -64,12 +67,12 @@ export default function ExposantsPage() {
             <div className="inline-block p-5 bg-secondary/10 rounded-2xl border border-secondary/20">
               <Store className="w-8 h-8 text-secondary" />
             </div>
-            <h1 className="text-[25px] font-black tracking-tighter uppercase italic leading-tight">
+            <h1 className="text-[25px] font-black tracking-tighter uppercase italic leading-tight text-white">
               VOTRE MARQUE <br />
               <span className="text-secondary">AU SOMMET</span>
             </h1>
             <p className="text-[13px] text-muted-foreground leading-relaxed italic opacity-80 max-w-lg">
-              Devenez exposant à ONE VIBE FEST 2027 et connectez-vous avec plus de 5000 festivaliers passionnés de culture, d'innovation et de style. Profitez d'un emplacement stratégique au cœur de Kinshasa.
+              Devenez exposant à ONE VIBE FEST et connectez-vous avec des milliers de passionnés de culture, d'innovation et de style. Profitez d'un emplacement stratégique au cœur de l'événement.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -94,12 +97,12 @@ export default function ExposantsPage() {
             </Button>
           </motion.div>
 
-          <div className="relative aspect-[4/5] max-w-[550px] rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl group mx-auto lg:mx-0">
+          <div className="relative aspect-[4/5] max-w-[550px] rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl group mx-auto lg:mx-0 bg-white/5">
             <Image 
               src="https://picsum.photos/seed/market1/800/1000" 
               alt="Exposant" 
               fill 
-              className="object-cover transition-all duration-700 group-hover:scale-105" 
+              className="object-cover transition-all duration-700 group-hover:scale-105 opacity-80" 
               data-ai-hint="exhibition stand festival" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -108,7 +111,7 @@ export default function ExposantsPage() {
                 <Zap className="w-5 h-5 text-secondary" />
                 <h3 className="text-[18px] font-black text-white uppercase italic">Impact VIBE</h3>
               </div>
-              <p className="text-[10px] text-white/90 font-black uppercase tracking-widest leading-relaxed italic">Boostez votre business dans l'écosystème le plus dynamique de Kinshasa.</p>
+              <p className="text-[10px] text-white/90 font-black uppercase tracking-widest leading-relaxed italic">Boostez votre business dans l'écosystème le plus dynamique de la capitale.</p>
             </div>
           </div>
         </div>
@@ -132,7 +135,7 @@ export default function ExposantsPage() {
                       <Store className="w-7 h-7 text-secondary" />
                     </div>
                     <h3 className="text-[22px] font-black uppercase italic">DOSSIER STAND</h3>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black mt-2 italic">Rejoignez l'élite 2027</p>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black mt-2 italic">Rejoignez l'élite</p>
                   </div>
 
                   <form onSubmit={handleSubmitRegistration} className="space-y-5">
