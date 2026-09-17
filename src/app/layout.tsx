@@ -1,9 +1,11 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/ui/toaster';
+import { VibeAssistant } from '@/components/VibeAssistant';
 
 export const metadata: Metadata = {
   title: 'ONE VIBE FEST 2027',
@@ -23,6 +25,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
+          <VibeAssistant />
           <Footer />
           <Toaster />
         </FirebaseClientProvider>

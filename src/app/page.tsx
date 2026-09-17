@@ -36,6 +36,11 @@ export default function LandingPage() {
   const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
   const [authData, setAuthData] = useState({ email: '', password: '', name: '', phone: '' });
   const [isAuthPending, setIsAuthPending] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -102,7 +107,6 @@ export default function LandingPage() {
           ticketCode: `MEMBER-${Math.floor(1000 + Math.random() * 9000)}`
         };
         
-        // Non-blocking Firestore write
         addDoc(collection(firestore, 'registrations'), regData).catch(err => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: 'registrations',
@@ -123,7 +127,7 @@ export default function LandingPage() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || !mounted) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />

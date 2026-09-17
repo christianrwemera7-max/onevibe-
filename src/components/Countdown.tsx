@@ -8,6 +8,7 @@ interface CountdownProps {
 }
 
 export function Countdown({ targetDate }: CountdownProps) {
+  const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
     days: 0,
     hours: 0,
@@ -16,6 +17,7 @@ export function Countdown({ targetDate }: CountdownProps) {
   });
 
   useEffect(() => {
+    setMounted(true);
     const target = targetDate ? new Date(targetDate) : new Date('2027-06-26T12:00:00');
 
     const timer = setInterval(() => {
@@ -38,6 +40,12 @@ export function Countdown({ targetDate }: CountdownProps) {
 
     return () => clearInterval(timer);
   }, [targetDate]);
+
+  if (!mounted) return (
+    <div className="h-[120px] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+    </div>
+  );
 
   const Item = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
