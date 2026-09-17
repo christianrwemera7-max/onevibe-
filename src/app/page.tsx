@@ -10,7 +10,9 @@ import {
   Zap,
   Mail,
   Lock,
-  ChevronRight
+  ChevronRight,
+  Play,
+  Youtube
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,7 +36,6 @@ export default function LandingPage() {
   const [authData, setAuthData] = useState({ email: '', password: '' });
   const [isAuthPending, setIsAuthPending] = useState(false);
 
-  // Fetch settings for ticketing link
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
@@ -42,6 +43,13 @@ export default function LandingPage() {
   const { data: settings } = useDoc(settingsRef);
   
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
+  const teaserUrl = settings?.teaserUrl;
+
+  const getYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url?.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +73,7 @@ export default function LandingPage() {
   if (isUserLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -74,15 +82,15 @@ export default function LandingPage() {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <div className="text-[25px] font-black tracking-tighter text-white uppercase inline-flex items-center gap-2">
               ONE<span className="text-primary">VIBE</span> <Sparkles className="text-primary w-5 h-5" />
             </div>
-            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em] mt-2 italic">Entrez dans la dimension VIBE</p>
+            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.4em] mt-3 italic opacity-60">Dimension 2027</p>
           </div>
 
-          <Card className="bg-white/5 border-white/10 text-white p-10 rounded-[2.5rem] backdrop-blur-2xl border-t-primary/20 shadow-2xl relative overflow-hidden">
-            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl opacity-50" />
+          <Card className="bg-white/5 border-white/10 text-white p-10 rounded-[3rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden">
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl opacity-30" />
             <form onSubmit={handleAuth} className="space-y-4 relative z-10">
               <div className="space-y-3">
                 <div className="relative">
@@ -91,7 +99,7 @@ export default function LandingPage() {
                     type="email" 
                     placeholder="E-mail" 
                     required 
-                    className="bg-black/50 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary"
+                    className="bg-black/40 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary"
                     value={authData.email}
                     onChange={e => setAuthData({...authData, email: e.target.value})}
                   />
@@ -102,22 +110,22 @@ export default function LandingPage() {
                     type="password" 
                     placeholder="Mot de passe" 
                     required 
-                    className="bg-black/50 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary"
+                    className="bg-black/40 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary"
                     value={authData.password}
                     onChange={e => setAuthData({...authData, password: e.target.value})}
                   />
                 </div>
               </div>
-              <Button disabled={isAuthPending} type="submit" className="w-full h-14 bg-primary text-white font-black rounded-2xl text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
-                {isAuthPending ? "CONNEXION..." : (authMode === 'SIGNUP' ? "CRÉER MON ACCÈS" : "DÉVERROUILLER")}
+              <Button disabled={isAuthPending} type="submit" className="w-full h-14 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
+                {isAuthPending ? "SYNCHRO..." : (authMode === 'SIGNUP' ? "CRÉER ACCÈS" : "DÉVERROUILLER")}
               </Button>
             </form>
             <div className="mt-8 text-center border-t border-white/5 pt-6 relative z-10">
               <button 
                 onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
-                className="text-[9px] text-muted-foreground hover:text-white uppercase font-black tracking-[0.2em] transition-colors italic"
+                className="text-[8px] text-muted-foreground hover:text-white uppercase font-black tracking-[0.3em] transition-colors italic"
               >
-                {authMode === 'SIGNUP' ? "DÉJÀ MEMBRE ? SE CONNECTER" : "PAS DE COMPTE ? S'INSCRIRE"}
+                {authMode === 'SIGNUP' ? "DÉJÀ MEMBRE ?" : "NOUVEAU ICI ?"}
               </button>
             </div>
           </Card>
@@ -127,63 +135,83 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="relative">
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-20">
+    <div className="relative bg-black overflow-x-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
             src={settings?.heroImageUrl || "https://picsum.photos/seed/vibe1/1920/1080"} 
             alt="Hero" 
             fill 
-            className="object-cover opacity-40 grayscale brightness-50" 
+            className="object-cover opacity-30 grayscale brightness-75" 
             priority 
-            data-ai-hint="festival lights energy" 
+            data-ai-hint="stadium concert lights" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 w-full relative z-10 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/20 border border-primary/40 backdrop-blur-xl text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-              <Zap className="w-4 h-4" /> 26 JUIN 2027 • INEPSS • KINSHASA
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-[9px] font-black uppercase tracking-[0.4em] text-white">
+              <Zap className="w-4 h-4 text-primary" /> 26 JUIN 2027 • INEPSS • KINSHASA
             </div>
             
-            <h1 className="text-[25px] font-black leading-tight tracking-tighter uppercase italic">
-              L'ÉNERGIE <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary">SANS LIMITES</span>
+            <h1 className="text-[25px] font-black leading-tight tracking-tighter uppercase italic text-white">
+              UNE ÉNERGIE <br />
+              <span className="text-primary">MULTIDIMENSIONNELLE</span>
             </h1>
             
-            <p className="max-w-2xl mx-auto text-white text-[11px] uppercase font-black tracking-[0.4em] italic opacity-70">
-              Musique • Art • Business • Digital
+            <p className="max-w-xl mx-auto text-white/50 text-[10px] uppercase font-black tracking-[0.5em] italic leading-relaxed">
+              Musique • Design • Business • Digital
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-5 justify-center mt-12">
-              <Button asChild size="lg" className="h-16 px-12 text-[10px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:scale-105 transition-all">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mt-12 items-center">
+              <Button asChild size="lg" className="h-16 px-12 text-[10px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-[0_0_40px_rgba(255,0,128,0.3)] hover:scale-105 transition-all">
                 <a href={ticketingUrl} target="_blank">
-                  PRENDRE MON PASS <ExternalLink className="ml-3 w-4 h-4" />
+                  BILLETTERIE <ExternalLink className="ml-3 w-4 h-4" />
                 </a>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-16 px-12 text-[10px] font-black rounded-full border-white/20 hover:bg-white/10 text-white uppercase tracking-[0.2em]">
-                <Link href="/univers">DÉCOUVRIR LES UNIVERS</Link>
-              </Button>
+              <Link href="/univers" className="group flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-white transition-all">
+                EXPLORER <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+              </Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      <section className="py-24 bg-neutral-950 border-y border-white/5 relative">
+      {teaserUrl && getYoutubeId(teaserUrl) && (
+        <section className="py-24 bg-black relative">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-[20px] font-black uppercase italic mb-2 tracking-tighter">LE TEASER</h2>
+              <div className="text-[9px] text-primary font-black uppercase tracking-[0.4em] italic opacity-60">Premier aperçu de l'immersion</div>
+            </div>
+            <div className="relative aspect-video rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl bg-white/5 group">
+              <iframe 
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${getYoutubeId(teaserUrl)}?autoplay=0&mute=0&controls=1`}
+                title="ONE VIBE FEST Teaser"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="py-24 bg-neutral-950 border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "LE FLOW", href: "/programme", desc: "Line-up et horaires.", color: "text-primary" },
-              { title: "LES DIMENSIONS", href: "/univers", desc: "4 univers immersifs.", color: "text-accent" },
-              { title: "EXPOSANTS", href: "/exposants", desc: "Boostez votre business.", color: "text-secondary" }
+              { title: "LE FLOW", href: "/programme", color: "text-primary", desc: "Line-up 2027" },
+              { title: "TALENTS", href: "/guests", color: "text-white", desc: "Les invités" },
+              { title: "UNIVERS", href: "/univers", color: "text-secondary", desc: "4 Dimensions" },
+              { title: "BUSINESS", href: "/exposants", color: "text-accent", desc: "Exposez ici" }
             ].map((card, i) => (
-              <Link key={i} href={card.href} className="group p-10 bg-white/5 rounded-[2.5rem] border border-white/5 hover:border-white/20 transition-all hover:-translate-y-2">
-                <h3 className={cn("text-[22px] font-black uppercase italic mb-3", card.color)}>{card.title}</h3>
-                <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.2em] mb-8 leading-relaxed italic">{card.desc}</p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-all">
-                  VOIR PLUS <ChevronRight className="w-3.5 h-3.5" />
-                </div>
+              <Link key={i} href={card.href} className="group p-10 bg-black border border-white/5 rounded-[2.5rem] hover:border-white/10 transition-all hover:-translate-y-2">
+                <div className={cn("text-[20px] font-black uppercase italic mb-2", card.color)}>{card.title}</div>
+                <p className="text-muted-foreground text-[9px] uppercase font-bold tracking-[0.2em] mb-8 italic">{card.desc}</p>
+                <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-white transition-all" />
               </Link>
             ))}
           </div>
