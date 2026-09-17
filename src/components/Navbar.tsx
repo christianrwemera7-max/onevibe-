@@ -28,10 +28,10 @@ export function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
         <Link href="/" className="flex flex-col leading-none group">
-          <div className="text-xl md:text-2xl font-black tracking-tighter text-white uppercase group-hover:text-primary transition-colors">
+          <div className="text-[20px] font-black tracking-tighter text-white uppercase group-hover:text-primary transition-colors">
             ONE<span className="text-primary group-hover:text-white">VIBE</span>
           </div>
-          <div className="text-[9px] font-bold tracking-widest text-muted-foreground uppercase">FEST | 2027</div>
+          <div className="text-[8px] font-bold tracking-widest text-muted-foreground uppercase">FEST | 2027</div>
         </Link>
         
         <div className="hidden lg:flex items-center gap-6">
@@ -72,7 +72,6 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Ticket CTA */}
         <Button 
           size="sm" 
           asChild
