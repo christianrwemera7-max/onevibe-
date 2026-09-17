@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -32,10 +31,10 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'HOME', icon: Sparkles },
-    { href: '/univers', label: 'UNIVERS', icon: Music },
+    { href: '/univers', label: '3 UNIVERS', icon: Music },
     { href: '/guests', label: 'TALENTS', icon: Star },
     { href: '/programme', label: 'AGENDA', icon: Calendar },
-    { href: '/exposants', label: 'BUSINESS', icon: Store },
+    { href: '/exposants', label: 'STANDS', icon: Store },
   ];
 
   return (
@@ -59,7 +58,7 @@ export function Navbar() {
                 href={link.href}
                 className={cn(
                   "px-5 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all rounded-full border border-transparent",
-                  pathname === link.href 
+                  pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')
                     ? "bg-white/5 text-white border-white/10" 
                     : "text-white/40 hover:text-white hover:bg-white/5"
                 )}
@@ -72,7 +71,7 @@ export function Navbar() {
 
             {user.email === 'christianrwemera4@gmail.com' && (
               <Link href="/admin" className="text-secondary hover:text-white flex items-center gap-2 border border-secondary/20 px-4 py-1.5 rounded-full bg-secondary/5 text-[9px] font-black uppercase tracking-widest transition-all mr-4">
-                <Lock className="w-3 h-3" /> ADMIN
+                <Lock className="w-3 h-3" /> COCKPIT
               </Link>
             )}
 
