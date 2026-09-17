@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Info, Globe } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Info, Globe, Share2 } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -67,6 +66,11 @@ export default function AdminDashboard() {
   const [eventDate, setEventDate] = useState('');
   const [eventLocation, setEventLocation] = useState('');
 
+  // Socials
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+
   // Media Settings
   const [heroInput, setHeroInput] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
@@ -90,6 +94,10 @@ export default function AdminDashboard() {
       setEventTagline(settings.eventTagline || 'UNE ÉNERGIE MULTIDIMENSIONNELLE');
       setEventDate(settings.eventDate || '2027-06-26T12:00:00');
       setEventLocation(settings.eventLocation || 'INEPSS • KINSHASA');
+
+      setInstagramUrl(settings.instagramUrl || '');
+      setTwitterUrl(settings.twitterUrl || '');
+      setFacebookUrl(settings.facebookUrl || '');
 
       setHeroInput(settings.heroImageUrl || '');
       setTicketingInput(settings.ticketingUrl || '');
@@ -146,6 +154,9 @@ export default function AdminDashboard() {
       eventTagline,
       eventDate,
       eventLocation,
+      instagramUrl,
+      twitterUrl,
+      facebookUrl,
       heroImageUrl: heroInput,
       ticketingUrl: ticketingInput,
       teaserUrl: teaserInput,
@@ -262,11 +273,11 @@ export default function AdminDashboard() {
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
             <TabsTrigger value="general" className="text-[10px] uppercase font-black"><Globe className="w-3 h-3 mr-2" /> Général</TabsTrigger>
-            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Inscrits</TabsTrigger>
+            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><Users className="w-3 h-3 mr-2" /> Inscrits</TabsTrigger>
             <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Univers</TabsTrigger>
             <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Guests</TabsTrigger>
             <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Agenda</TabsTrigger>
-            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Medias</TabsTrigger>
+            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Médias</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
@@ -290,14 +301,31 @@ export default function AdminDashboard() {
                   <Input value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" placeholder="Ex: 26 JUIN 2027 • INEPSS • KINSHASA" />
                 </div>
               </div>
-              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest w-full"><Save className="w-4 h-4 mr-2" /> ENREGISTRER L'IDENTITÉ</Button>
+
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <h3 className="text-[11px] font-black uppercase tracking-widest italic flex items-center gap-2 text-secondary"><Share2 className="w-4 h-4" /> Réseaux Sociaux</h3>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN INSTAGRAM</label>
+                  <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} className="bg-black border-white/10 h-12 rounded-xl" placeholder="https://instagram.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN TWITTER / X</label>
+                  <Input value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} className="bg-black border-white/10 h-12 rounded-xl" placeholder="https://x.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN FACEBOOK</label>
+                  <Input value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} className="bg-black border-white/10 h-12 rounded-xl" placeholder="https://facebook.com/..." />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest w-full"><Save className="w-4 h-4 mr-2" /> ENREGISTRER L'IDENTITÉ ET LES LIENS</Button>
             </Card>
           </TabsContent>
 
           <TabsContent value="tickets">
             <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] overflow-hidden">
               <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
-                <CardTitle className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Base de Données</CardTitle>
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Base de Données Inscrits</CardTitle>
                 <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] font-black uppercase h-9 rounded-xl">
                   <Download className="w-3 h-3 mr-2" /> Exporter (CSV)
                 </Button>

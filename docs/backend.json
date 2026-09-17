@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Registration": {
@@ -52,7 +51,6 @@
         "eventTagline": { "type": "string", "description": "Slogan ou description courte" },
         "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
         "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
-        "establishedYear": { "type": "string", "description": "Année de création affichée sous le logo (ex: 2026)" },
         "heroImageUrl": { "type": "string" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
@@ -62,7 +60,10 @@
         "creativeDesc": { "type": "string" },
         "creativeImg": { "type": "string" },
         "digitalDesc": { "type": "string" },
-        "digitalImg": { "type": "string" }
+        "digitalImg": { "type": "string" },
+        "instagramUrl": { "type": "string" },
+        "twitterUrl": { "type": "string" },
+        "facebookUrl": { "type": "string" }
       }
     }
   },
