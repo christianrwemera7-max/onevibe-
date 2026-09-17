@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
   }, [firestore]);
-  const { data: settings } = useDoc(festivalSettingsRef);
+  const { data: settings } = useDoc(settingsRef);
 
   const programCollectionRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -191,18 +191,21 @@ export default function AdminDashboard() {
 
   const handleExportCSV = () => {
     if (!registrations || registrations.length === 0) {
-      toast({ variant: "destructive", title: "Export impossible", description: "Aucune donnée de réservation à exporter." });
+      toast({ variant: "destructive", title: "Export impossible", description: "Aucune donnée d'inscription à exporter." });
       return;
     }
 
-    const headers = ["Nom", "Email", "Téléphone", "Type", "Catégorie", "Entreprise", "Code Billet", "Date Création"];
-    const rows = registrations.map(reg => [
-      `"${reg.name || ''}"`,
+    // Préparation des données CSV (Inscriptions accès site + Stands + Pass)
+    const headers = ["Nom", "Email", "Téléphone", "Type", "Code Billet/Accès", "Date Inscription"];
+    const sortedRegistrations = [...registrations].sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+
+    const rows = sortedRegistrations.map(reg => [
+      `"${reg.name || 'Inconnu'}"`,
       `"${reg.email || ''}"`,
       `"${reg.phone || ''}"`,
-      `"${reg.type || ''}"`,
-      `"${reg.passCategory || ''}"`,
-      `"${reg.company || ''}"`,
+      `"${reg.type || 'VISITEUR'}"`,
       `"${reg.ticketCode || ''}"`,
       `"${reg.createdAt || ''}"`
     ]);
@@ -212,12 +215,12 @@ export default function AdminDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `one-vibe-registrations-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `one-vibe-data-export-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    toast({ title: "Export réussi", description: "Le fichier CSV a été téléchargé." });
+    toast({ title: "Export réussi", description: `${registrations.length} contacts exportés.` });
   };
 
   if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest italic">Chargement du cockpit...</div>;
@@ -225,10 +228,10 @@ export default function AdminDashboard() {
   if (!user || user.email !== 'christianrwemera4@gmail.com') {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-black border-white/10 text-white p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+        <Card className="max-w-md w-full bg-black border-white/10 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
           <div className="text-center mb-10">
             <Shield className="w-6 h-6 text-primary mx-auto mb-4" />
-            <div className="text-[20px] font-black uppercase tracking-tighter">COCKPIT <span className="text-primary">ADMIN</span></div>
+            <div className="text-[18px] font-black uppercase tracking-tighter">COCKPIT <span className="text-primary">ADMIN</span></div>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-white/5 border-white/10 text-xs h-14 rounded-2xl" />
@@ -245,21 +248,13 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
-          <div className="text-[20px] font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[9px] bg-primary/20 text-primary px-3 py-1 rounded-full ml-2 font-black italic">COCKPIT</span></div>
+          <div className="text-[18px] font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[9px] bg-primary/20 text-primary px-3 py-1 rounded-full ml-2 font-black italic">COCKPIT</span></div>
           <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Quitter</Button>
         </div>
 
-        <Alert className="bg-primary/10 border-primary/20 text-primary rounded-2xl">
-          <Upload className="h-4 w-4 text-primary" />
-          <AlertTitle className="text-xs font-black uppercase tracking-widest italic">NOUVEAU : TÉLÉVERSER VOS IMAGES</AlertTitle>
-          <AlertDescription className="text-[10px] uppercase font-bold tracking-wider italic">
-            Vous pouvez maintenant choisir un fichier directement depuis votre ordinateur. Il sera stocké sur Cloudinary et le lien sera généré automatiquement.
-          </AlertDescription>
-        </Alert>
-
         <Tabs defaultValue="tickets" className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
-            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Stands & Pass</TabsTrigger>
+            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Inscriptions & Pass</TabsTrigger>
             <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Les 3 Univers</TabsTrigger>
             <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Talents</TabsTrigger>
             <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Agenda</TabsTrigger>
@@ -267,19 +262,19 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="tickets">
-            <Card className="bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
+            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] overflow-hidden">
               <CardHeader className="border-b border-white/5 bg-white/[0.02] flex flex-row items-center justify-between">
-                <CardTitle className="text-[14px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Réservations Enregistrées</CardTitle>
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Base de Données Contacts</CardTitle>
                 <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] font-black uppercase tracking-widest h-9 rounded-xl hover:bg-white/10 transition-all">
-                  <Download className="w-3 h-3 mr-2" /> Exporter (CSV)
+                  <Download className="w-3 h-3 mr-2" /> Exporter Tous les Contacts (CSV)
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader className="bg-black/20">
                     <TableRow className="border-white/10">
-                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Demandeur</TableHead>
-                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Type / Code</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Participant</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Type / Info</TableHead>
                       <TableHead className="text-white text-[9px] uppercase font-black px-6 text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -287,14 +282,15 @@ export default function AdminDashboard() {
                     {registrations?.map((reg) => (
                       <TableRow key={reg.id} className="border-white/5 hover:bg-white/[0.03]">
                         <TableCell className="px-6 py-4">
-                          <div className="font-black text-xs uppercase italic">{reg.name}</div>
-                          <div className="text-[9px] text-muted-foreground lowercase font-mono">{reg.email} • {reg.phone}</div>
+                          <div className="font-black text-[11px] uppercase italic">{reg.name}</div>
+                          <div className="text-[9px] text-muted-foreground lowercase font-mono">{reg.email}</div>
+                          <div className="text-[9px] text-primary font-black italic">{reg.phone}</div>
                         </TableCell>
                         <TableCell className="px-6">
-                          <span className={`text-[9px] border px-2 py-0.5 rounded-full font-black uppercase italic mr-2 ${reg.type === 'EXPOSITOR' ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                          <span className={`text-[8px] border px-2 py-0.5 rounded-full font-black uppercase italic mr-2 ${reg.type === 'EXPOSITOR' ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
                             {reg.type}
                           </span>
-                          <span className="font-mono text-[10px] text-white/50">{reg.ticketCode}</span>
+                          <span className="font-mono text-[9px] text-white/50">{reg.ticketCode}</span>
                         </TableCell>
                         <TableCell className="px-6 text-right">
                           <Button size="icon" variant="ghost" className="text-destructive/50 hover:text-destructive h-8 w-8" onClick={() => handleDeleteDoc('registrations', reg.id)}><Trash className="w-3.5 h-3.5" /></Button>
@@ -308,7 +304,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="universes">
-            <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6 space-y-6">
+            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] p-6 space-y-6">
               <h3 className="text-[12px] font-black uppercase tracking-widest italic border-b border-white/5 pb-2">Contenu des 3 Univers Thématiques</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -319,9 +315,9 @@ export default function AdminDashboard() {
                     <textarea value={musicDesc} onChange={e => setMusicDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
                     <div className="flex gap-2">
-                      <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
                       <div className="relative">
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setMusicImg, 'music')} />
                         <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'music'}>
@@ -339,9 +335,9 @@ export default function AdminDashboard() {
                     <textarea value={creativeDesc} onChange={e => setCreativeDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
                     <div className="flex gap-2">
-                      <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
                       <div className="relative">
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setCreativeImg, 'creative')} />
                         <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'creative'}>
@@ -359,9 +355,9 @@ export default function AdminDashboard() {
                     <textarea value={digitalDesc} onChange={e => setDigitalDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
                     <div className="flex gap-2">
-                      <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
                       <div className="relative">
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setDigitalImg, 'digital')} />
                         <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'digital'}>
@@ -379,18 +375,18 @@ export default function AdminDashboard() {
 
           <TabsContent value="talents">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6">
-                <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Ajouter un Talent / Artiste</h3>
+              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6">
+                <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Ajouter un Talent</h3>
                 <form onSubmit={handleAddTalent} className="space-y-4">
-                  <Input required value={newTalent.name} onChange={e => setNewTalent({...newTalent, name: e.target.value})} placeholder="Nom de l'artiste" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newTalent.role} onChange={e => setNewTalent({...newTalent, role: e.target.value})} placeholder="Rôle ou Spécialité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <select className="w-full bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white outline-none" value={newTalent.category} onChange={e => setNewTalent({...newTalent, category: e.target.value})}>
+                  <Input required value={newTalent.name} onChange={e => setNewTalent({...newTalent, name: e.target.value})} placeholder="Nom" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input required value={newTalent.role} onChange={e => setNewTalent({...newTalent, role: e.target.value})} placeholder="Spécialité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <select className="w-full bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newTalent.category} onChange={e => setNewTalent({...newTalent, category: e.target.value})}>
                     <option value="MUSIC">MUSIQUE</option>
                     <option value="CREATIVE">CRÉATIF</option>
                     <option value="DIGITAL">DIGITAL</option>
                   </select>
                   <div className="flex gap-2">
-                    <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
+                    <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
                     <div className="relative">
                       <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, (url) => setNewTalent({...newTalent, imageUrl: url}), 'talents')} />
                       <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'talents'}>
@@ -398,10 +394,10 @@ export default function AdminDashboard() {
                       </Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
+                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl tracking-widest">Ajouter</Button>
                 </form>
               </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
                 <Table>
                   <TableHeader className="bg-black/20">
                     <TableRow className="border-white/10">
@@ -413,9 +409,9 @@ export default function AdminDashboard() {
                   <TableBody>
                     {talents?.map((talent) => (
                       <TableRow key={talent.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell className="px-6">
-                          <div className="text-xs font-black uppercase italic">{talent.name}</div>
-                          <div className="text-[9px] text-muted-foreground uppercase">{talent.role}</div>
+                        <TableCell className="px-6 py-4">
+                          <div className="text-[11px] font-black uppercase italic">{talent.name}</div>
+                          <div className="text-[9px] text-muted-foreground">{talent.role}</div>
                         </TableCell>
                         <TableCell className="px-6 text-[9px] font-black text-primary">{talent.category}</TableCell>
                         <TableCell className="px-6 text-right">
@@ -431,14 +427,14 @@ export default function AdminDashboard() {
 
           <TabsContent value="program">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6">
-                <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Ajouter une Activité</h3>
+              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6">
+                <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Ajouter une Activité</h3>
                 <form onSubmit={handleAddProgram} className="space-y-4">
                   <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description textuelle" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <div className="flex gap-2">
-                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
+                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
                     <div className="relative">
                       <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, (url) => setNewProgram({...newProgram, imageUrl: url}), 'program')} />
                       <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'program'}>
@@ -446,10 +442,10 @@ export default function AdminDashboard() {
                       </Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter à l'agenda</Button>
+                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest">Ajouter</Button>
                 </form>
               </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
                 <Table>
                   <TableHeader className="bg-black/20">
                     <TableRow className="border-white/10">
@@ -461,8 +457,8 @@ export default function AdminDashboard() {
                   <TableBody>
                     {programItems?.map((item) => (
                       <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell className="px-6 font-black text-primary text-xs italic">{item.time}</TableCell>
-                        <TableCell className="px-6 text-xs font-bold uppercase">{item.title}</TableCell>
+                        <TableCell className="px-6 font-black text-primary text-[11px] italic">{item.time}</TableCell>
+                        <TableCell className="px-6 text-[11px] font-bold uppercase">{item.title}</TableCell>
                         <TableCell className="px-6 text-right">
                           <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('program', item.id)}><Trash className="w-3.5 h-3.5" /></Button>
                         </TableCell>
@@ -475,13 +471,13 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="hero">
-            <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-8 max-w-2xl">
-              <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Configuration Globale & Médias</h3>
+            <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl">
+              <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Médias & Liens Externes</h3>
               <div className="space-y-6">
                 <div>
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO</label>
                   <div className="flex gap-2">
-                    <Input placeholder="URL ou téléverser..." value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl flex-1" />
+                    <Input value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl flex-1" />
                     <div className="relative">
                       <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setHeroInput, 'hero')} />
                       <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero'}>
@@ -491,20 +487,14 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN BILLETTERIE EXTERNE (OMT EVENTS)</label>
-                  <div className="relative">
-                    <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                    <Input placeholder="https://omtevents.com" value={ticketingInput} onChange={(e) => setTicketingInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 pl-12 rounded-2xl" />
-                  </div>
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">BILLETTERIE (OMT EVENTS)</label>
+                  <Input value={ticketingInput} onChange={(e) => setTicketingInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
                 </div>
                 <div>
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN TEASER YOUTUBE</label>
-                  <div className="relative">
-                    <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                    <Input placeholder="Lien complet de la vidéo YouTube" value={teaserInput} onChange={(e) => setTeaserInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 pl-12 rounded-2xl" />
-                  </div>
+                  <Input value={teaserInput} onChange={(e) => setTeaserInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
                 </div>
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest shadow-xl shadow-primary/20"><Save className="w-4 h-4 mr-2" /> Mettre à jour les médias</Button>
+                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest"><Save className="w-4 h-4 mr-2" /> Mettre à jour</Button>
               </div>
             </Card>
           </TabsContent>

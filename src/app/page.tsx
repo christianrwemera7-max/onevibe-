@@ -11,7 +11,9 @@ import {
   Mail,
   Lock,
   ChevronRight,
-  ArrowDown
+  ArrowDown,
+  User as UserIcon,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,7 +23,7 @@ import Link from 'next/link';
 
 import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Countdown } from '@/components/Countdown';
@@ -33,7 +35,7 @@ export default function LandingPage() {
   const { toast } = useToast();
   
   const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
-  const [authData, setAuthData] = useState({ email: '', password: '' });
+  const [authData, setAuthData] = useState({ email: '', password: '', name: '', phone: '' });
   const [isAuthPending, setIsAuthPending] = useState(false);
 
   const settingsRef = useMemoFirebase(() => {
@@ -55,18 +57,31 @@ export default function LandingPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth || !firestore) return;
     setIsAuthPending(true);
     try {
       if (authMode === 'SIGNUP') {
-        await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Bienvenue !", description: "Accès festival activé." });
+        const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
+        
+        // Enregistrement des infos supplémentaires dans la collection registrations
+        await addDoc(collection(firestore, 'registrations'), {
+          userId: userCredential.user.uid,
+          name: authData.name,
+          email: authData.email,
+          phone: authData.phone,
+          type: 'PASS',
+          passCategory: 'STANDARD',
+          createdAt: new Date().toISOString(),
+          ticketCode: `OVF-MEMBER-${Math.floor(1000 + Math.random() * 9000)}`
+        });
+
+        toast({ title: "Bienvenue !", description: "Accès festival activé et profil enregistré." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);
         toast({ title: "Content de vous revoir !", description: "Synchronisation établie." });
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: "Identifiants incorrects." });
+      toast({ variant: "destructive", title: "Erreur", description: err.message || "Identifiants incorrects." });
     } finally {
       setIsAuthPending(false);
     }
@@ -96,6 +111,30 @@ export default function LandingPage() {
             <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl opacity-30" />
             <form onSubmit={handleAuth} className="space-y-5 relative z-10">
               <div className="space-y-4">
+                {authMode === 'SIGNUP' && (
+                  <>
+                    <div className="relative">
+                      <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <Input 
+                        placeholder="Nom complet" 
+                        required 
+                        className="bg-black/40 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary font-medium"
+                        value={authData.name}
+                        onChange={e => setAuthData({...authData, name: e.target.value})}
+                      />
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <Input 
+                        placeholder="Téléphone" 
+                        required 
+                        className="bg-black/40 border-white/10 pl-12 h-14 text-sm rounded-2xl focus:ring-primary font-medium"
+                        value={authData.phone}
+                        onChange={e => setAuthData({...authData, phone: e.target.value})}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="relative">
                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <Input 
@@ -120,7 +159,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <Button disabled={isAuthPending} type="submit" className="w-full h-14 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
-                {isAuthPending ? "SYNCHRO..." : (authMode === 'SIGNUP' ? "CRÉER ACCÈS" : "DÉVERROUILLER")}
+                {isAuthPending ? "SYNCHRO..." : (authMode === 'SIGNUP' ? "S'INSCRIRE" : "DÉVERROUILLER")}
               </Button>
             </form>
             <div className="mt-8 text-center border-t border-white/5 pt-6 relative z-10">
@@ -128,7 +167,7 @@ export default function LandingPage() {
                 onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
                 className="text-[8px] text-muted-foreground hover:text-white uppercase font-black tracking-[0.3em] transition-colors italic"
               >
-                {authMode === 'SIGNUP' ? "DÉJÀ MEMBRE ?" : "NOUVEAU ICI ?"}
+                {authMode === 'SIGNUP' ? "DÉJÀ MEMBRE ? CONNEXION" : "NOUVEAU ICI ? CRÉER COMPTE"}
               </button>
             </div>
           </Card>
