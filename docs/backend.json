@@ -49,7 +49,8 @@
       "type": "object",
       "properties": {
         "heroImageUrl": { "type": "string" },
-        "title": { "type": "string" }
+        "title": { "type": "string" },
+        "ticketingUrl": { "type": "string", "description": "Lien vers la billetterie externe" }
       }
     }
   },
@@ -71,7 +72,7 @@
     },
     "/settings/festival": {
       "schema": "FestivalSettings",
-      "description": "Paramètres généraux modifiables comme l'image Hero"
+      "description": "Paramètres généraux modifiables comme l'image Hero et le lien de billetterie"
     }
   }
 }

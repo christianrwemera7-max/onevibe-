@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Key, Shield } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,6 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const router = useRouter();
 
-  // Redirect if not the official admin email
   useEffect(() => {
     if (!isUserLoading && user && user.email !== 'christianrwemera4@gmail.com') {
       router.push('/');
@@ -34,7 +33,6 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('0994472599');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Firestore Refs
   const festivalSettingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
@@ -54,7 +52,15 @@ export default function AdminDashboard() {
   const { data: registrations } = useCollection(registrationsCollectionRef);
 
   const [heroInput, setHeroInput] = useState('');
+  const [ticketingInput, setTicketingInput] = useState('');
   const [newProgram, setNewProgram] = useState({ time: '', title: '', desc: '', imageUrl: '' });
+
+  useEffect(() => {
+    if (settings) {
+      setHeroInput(settings.heroImageUrl || '');
+      setTicketingInput(settings.ticketingUrl || '');
+    }
+  }, [settings]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +79,8 @@ export default function AdminDashboard() {
   const handleSaveSettings = () => {
     if (!festivalSettingsRef) return;
     const data = {
-      heroImageUrl: heroInput || settings?.heroImageUrl || 'https://picsum.photos/seed/vibehero/1920/1080',
+      heroImageUrl: heroInput || 'https://picsum.photos/seed/vibehero/1920/1080',
+      ticketingUrl: ticketingInput || 'https://omtevents.com',
       updatedAt: new Date().toISOString()
     };
     setDoc(festivalSettingsRef, data, { merge: true }).catch(err => {
@@ -113,7 +120,6 @@ export default function AdminDashboard() {
 
   if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest italic">Chargement du noyau...</div>;
 
-  // Si pas connecté OU pas le bon email
   if (!user || user.email !== 'christianrwemera4@gmail.com') {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -123,8 +129,8 @@ export default function AdminDashboard() {
             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            <div className="text-2xl font-black text-white uppercase tracking-tighter">ACCÈS <span className="text-primary">ADMIN</span></div>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] mt-2">Authentification requise</p>
+            <div className="text-[25px] font-black text-white uppercase tracking-tighter">ACCÈS <span className="text-primary">ADMIN</span></div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] mt-2 italic">Authentification requise</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             <div className="space-y-2">
@@ -160,12 +166,12 @@ export default function AdminDashboard() {
         
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
           <div className="flex items-center gap-4">
-            <div className="text-xl font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[10px] bg-primary/20 text-primary px-3 py-1 rounded-full ml-2 font-black italic">CORE</span></div>
+            <div className="text-[20px] font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[9px] bg-primary/20 text-primary px-3 py-1 rounded-full ml-2 font-black italic">CORE</span></div>
           </div>
           <div className="flex gap-4 items-center">
-            <span className="text-[10px] text-muted-foreground font-mono">{user.email}</span>
-            <Button asChild variant="outline" className="text-[9px] h-9 border-white/20 uppercase font-black"><a href="/">Quitter</a></Button>
-            <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black"><LogOut className="w-3.5 h-3.5 mr-2" /> Déconnexion</Button>
+            <span className="text-[9px] text-muted-foreground font-mono">{user.email}</span>
+            <Button asChild variant="outline" className="text-[9px] h-9 border-white/20 uppercase font-black rounded-xl"><a href="/">Quitter</a></Button>
+            <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Déconnexion</Button>
           </div>
         </div>
 
@@ -180,15 +186,15 @@ export default function AdminDashboard() {
           <TabsContent value="tickets">
             <Card className="bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
               <CardHeader className="border-b border-white/5 bg-white/[0.02]">
-                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Liste des Participants</CardTitle>
+                <CardTitle className="text-[14px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Participants & Exposants</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader className="bg-black/20 border-white/10">
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Participant</TableHead>
-                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Type de Pass</TableHead>
-                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Identifiant Unique</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Type</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Code Unique</TableHead>
                       <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -200,8 +206,8 @@ export default function AdminDashboard() {
                           <div className="text-[9px] text-muted-foreground lowercase font-mono">{reg.email}</div>
                         </TableCell>
                         <TableCell className="px-6">
-                          <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-black uppercase italic">
-                            {reg.passCategory || reg.type}
+                          <span className={`text-[9px] border px-2 py-0.5 rounded-full font-black uppercase italic ${reg.type === 'EXPOSITOR' ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                            {reg.type}
                           </span>
                         </TableCell>
                         <TableCell className="px-6 font-mono text-[10px] text-white/40">{reg.ticketCode}</TableCell>
@@ -219,12 +225,12 @@ export default function AdminDashboard() {
           <TabsContent value="program">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6">
-                <h3 className="text-xs font-black uppercase tracking-widest mb-6">Ajouter un créneau</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Ajouter une activité</h3>
                 <form onSubmit={handleAddProgram} className="space-y-4">
                   <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 16:30)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Brève description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter au flux</Button>
+                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter au programme</Button>
                 </form>
               </Card>
               <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
@@ -254,10 +260,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="hero">
             <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-8 max-w-2xl">
-              <h3 className="text-xs font-black uppercase tracking-widest mb-6 italic">Configuration Visuelle</h3>
+              <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Configuration Générale</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-2">Image Hero (1920x1080)</label>
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE HERO (URL)</label>
                   <Input 
                     placeholder="URL de l'image de fond"
                     value={heroInput}
@@ -265,16 +271,28 @@ export default function AdminDashboard() {
                     className="bg-black border-white/10 text-xs h-14 rounded-2xl"
                   />
                 </div>
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest"><Save className="w-4 h-4 mr-2" /> Déployer les changements</Button>
+                <div>
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN BILLETTERIE (EXTERNE)</label>
+                  <div className="relative">
+                    <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                    <Input 
+                      placeholder="https://omtevents.com"
+                      value={ticketingInput}
+                      onChange={(e) => setTicketingInput(e.target.value)}
+                      className="bg-black border-white/10 text-xs h-14 pl-12 rounded-2xl"
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest shadow-xl shadow-primary/20"><Save className="w-4 h-4 mr-2" /> Appliquer les changements</Button>
               </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="security">
             <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-8 max-w-md">
-              <h3 className="text-xs font-black uppercase tracking-widest mb-4">Gestion Administrative</h3>
-              <p className="text-[10px] text-muted-foreground mb-6 leading-relaxed">Le compte <span className="text-white font-bold">christianrwemera4@gmail.com</span> est le seul habilité à accéder à ce noyau.</p>
-              <Button onClick={() => signOut(auth!)} variant="destructive" className="w-full h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest"><LogOut className="w-4 h-4 mr-2" /> Forcer la déconnexion</Button>
+              <h3 className="text-[12px] font-black uppercase tracking-widest mb-4 italic">Sécurité Admin</h3>
+              <p className="text-[10px] text-muted-foreground mb-6 leading-relaxed italic">Le compte <span className="text-white font-bold">christianrwemera4@gmail.com</span> possède les privilèges root. Les autres utilisateurs sont limités à l'espace public.</p>
+              <Button onClick={() => signOut(auth!)} variant="destructive" className="w-full h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest"><LogOut className="w-4 h-4 mr-2" /> Se déconnecter du noyau</Button>
             </Card>
           </TabsContent>
         </Tabs>
