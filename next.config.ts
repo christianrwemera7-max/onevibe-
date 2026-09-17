@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    // Résout l'erreur "Cross origin request detected" dans l'environnement Cloud Workstations
+    // et stabilise la connexion HMR (Hot Module Replacement)
+    allowedDevOrigins: [
+      '*.cloudworkstations.dev',
+      '*.firebase-studio.dev',
+      '*.apphosting.adapter.run'
+    ]
+  },
   images: {
     remotePatterns: [
       {
