@@ -1,10 +1,14 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Nouvelle Application',
-  description: 'Projet créé avec Next.js et Firebase',
+  title: 'ONE VIBE FEST 2027',
+  description: 'Le plus grand festival multidisciplinaire de Kinshasa.',
 };
 
 export default function RootLayout({
@@ -13,10 +17,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body className="font-sans antialiased">
+    <html lang="fr" className="scroll-smooth">
+      <body className="font-sans antialiased bg-black selection:bg-primary selection:text-white">
         <FirebaseClientProvider>
-          {children}
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+          <Toaster />
         </FirebaseClientProvider>
       </body>
     </html>
