@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -15,7 +16,6 @@ export function Footer() {
 
   const eventName = settings?.eventName || 'ONE VIBE';
   const eventLocation = settings?.eventLocation || '26 JUIN 2027 • INEPSS • KINSHASA';
-  const establishedYear = settings?.establishedYear || '2026';
 
   return (
     <footer className="pt-24 pb-12 border-t border-white/5 bg-black text-white relative overflow-hidden">
@@ -28,9 +28,6 @@ export function Footer() {
             <div className="flex flex-col leading-none">
               <div className="text-[24px] font-black tracking-tighter uppercase italic flex items-center gap-2">
                 {eventName} <Sparkles className="w-5 h-5 text-primary" />
-              </div>
-              <div className="text-[9px] font-bold tracking-[0.4em] text-white/40 uppercase mt-2 italic">
-                EST. {establishedYear}
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed italic max-w-xs">
