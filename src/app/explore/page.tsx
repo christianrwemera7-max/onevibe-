@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -66,7 +67,7 @@ export default function ExplorePage() {
               <div className="inline-flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-[0.3em] mb-4">
                 <Sparkles className="w-4 h-4" /> IMMERSION TOTALE
               </div>
-              <h1 className="text-[25px] font-black uppercase italic mb-4 tracking-tighter">LE TEASER 2027</h1>
+              <h1 className="text-[25px] font-black uppercase italic mb-4 tracking-tighter">TEASER OFFICIEL DE ONE VIBE FEST</h1>
               <div className="w-16 h-1 bg-primary/20 mx-auto mt-6 rounded-full" />
             </motion.div>
 
@@ -102,23 +103,23 @@ export default function ExplorePage() {
               >
                 <Button 
                   asChild
-                  className="w-full h-24 sm:h-20 bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.02] shadow-[0_10px_40px_rgba(255,0,128,0.3)]"
+                  className="w-full h-20 sm:h-16 bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.02] shadow-[0_10px_40px_rgba(255,0,128,0.3)]"
                 >
                   <Link href={btn.href}>
                     <div className="flex items-center gap-4 sm:gap-6">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                        {btn.icon}
+                      <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        {React.cloneElement(btn.icon as React.ReactElement, { className: 'w-4 h-4' })}
                       </div>
                       <div className="text-left">
-                        <div className="text-[12px] sm:text-[14px] font-black uppercase italic tracking-tight leading-tight">
+                        <div className="text-[11px] sm:text-[13px] font-black uppercase italic tracking-tight leading-tight">
                           {btn.title}
                         </div>
-                        <div className="text-[8px] sm:text-[9px] font-bold opacity-70 uppercase tracking-widest mt-1">
+                        <div className="text-[7px] sm:text-[8px] font-bold opacity-70 uppercase tracking-widest mt-0.5">
                           {btn.desc}
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="w-6 h-6 shrink-0 group-hover:translate-x-2 transition-transform hidden sm:block" />
+                    <ChevronRight className="w-5 h-5 shrink-0 group-hover:translate-x-2 transition-transform hidden sm:block" />
                   </Link>
                 </Button>
               </motion.div>
