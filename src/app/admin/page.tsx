@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -70,6 +71,7 @@ export default function AdminDashboard() {
   const [instagramUrl, setInstagramUrl] = useState('');
   const [twitterUrl, setTwitterUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
 
   // Media Settings
   const [heroInput, setHeroInput] = useState('');
@@ -98,6 +100,7 @@ export default function AdminDashboard() {
       setInstagramUrl(settings.instagramUrl || '');
       setTwitterUrl(settings.twitterUrl || '');
       setFacebookUrl(settings.facebookUrl || '');
+      setTiktokUrl(settings.tiktokUrl || '');
 
       setHeroInput(settings.heroImageUrl || '');
       setTicketingInput(settings.ticketingUrl || '');
@@ -157,6 +160,7 @@ export default function AdminDashboard() {
       instagramUrl,
       twitterUrl,
       facebookUrl,
+      tiktokUrl,
       heroImageUrl: heroInput,
       ticketingUrl: ticketingInput,
       teaserUrl: teaserInput,
@@ -315,6 +319,10 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN FACEBOOK</label>
                   <Input value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} className="bg-black border-white/10 h-12 rounded-xl" placeholder="https://facebook.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN TIKTOK</label>
+                  <Input value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} className="bg-black border-white/10 h-12 rounded-xl" placeholder="https://tiktok.com/@..." />
                 </div>
               </div>
 

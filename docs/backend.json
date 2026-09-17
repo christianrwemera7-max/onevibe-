@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Registration": {
@@ -63,7 +64,8 @@
         "digitalImg": { "type": "string" },
         "instagramUrl": { "type": "string" },
         "twitterUrl": { "type": "string" },
-        "facebookUrl": { "type": "string" }
+        "facebookUrl": { "type": "string" },
+        "tiktokUrl": { "type": "string" }
       }
     }
   },
