@@ -46,7 +46,7 @@ export default function ExplorePage() {
       desc: "Timing millimétré" 
     },
     { 
-      title: "RÉSERVER VOTRE STAND AUPRÈS DES ORGANISATEURS", 
+      title: "RESERVER VOTRE STAND AUPRÈS DES ORGANISATEURS", 
       href: "/exposants", 
       icon: <Store className="w-5 h-5" />,
       desc: "Boostez votre business" 
@@ -103,7 +103,7 @@ export default function ExplorePage() {
               >
                 <Button 
                   asChild
-                  className="w-full h-20 sm:h-16 bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.02] shadow-[0_10px_40px_rgba(255,0,128,0.3)]"
+                  className="w-full h-20 sm:h-16 bg-[#d10069] hover:bg-[#b5005b] text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.02] shadow-[0_10px_40px_rgba(181,0,91,0.3)]"
                 >
                   <Link href={btn.href}>
                     <div className="flex items-center gap-4 sm:gap-6">
