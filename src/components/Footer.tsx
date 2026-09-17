@@ -40,9 +40,7 @@ export function Footer() {
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
 
-  // Évite les discordances d'hydratation (SSR vs Client)
-  const currentYear = mounted ? new Date().getFullYear() : 2027;
-
+  // On n'affiche le footer qu'après le montage client pour éviter les erreurs d'hydratation
   if (!mounted) return null;
 
   return (
@@ -52,6 +50,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 items-center">
           
+          {/* Colonne 1 : Identité & Réseaux */}
           <div className="space-y-4">
             <div className="text-[20px] font-black tracking-tighter uppercase italic flex items-center gap-2">
               {eventName} <Sparkles className="w-4 h-4 text-primary" />
@@ -75,6 +74,7 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Colonne 2 : Contact Direct */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">CONTACT</h3>
             <div className="space-y-2">
@@ -87,6 +87,7 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Colonne 3 : Localisation / Itinéraire */}
           <div>
             <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-primary transition-colors">
               <MapPin className="w-4 h-4 text-primary shrink-0" />
@@ -101,9 +102,10 @@ export function Footer() {
 
         </div>
 
+        {/* Barre de Copyright */}
         <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.2em] italic">
-            © {currentYear} {eventName} FEST • TOUS DROITS RÉSERVÉS.
+            © 2027 {eventName} FEST • TOUS DROITS RÉSERVÉS.
           </div>
           <div className="flex items-center gap-1.5 text-[9px] font-black text-white/20 tracking-widest uppercase italic">
             <Globe className="w-3 h-3" /> KINSHASA VIBE
