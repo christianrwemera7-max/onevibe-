@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +16,14 @@ export function Navbar() {
   const firestore = useFirestore();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -24,13 +31,9 @@ export function Navbar() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  if (!user) return null;
+  // Sécurité d'hydratation : on n'affiche rien avant le montage client
+  // et on n'affiche la barre que pour les utilisateurs connectés
+  if (!mounted || !user) return null;
 
   return (
     <nav className={cn(

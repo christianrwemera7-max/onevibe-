@@ -40,8 +40,10 @@ export function Footer() {
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
 
-  // Évite les discordances d'hydratation dues aux dates système ou au chargement asynchrone initial
+  // Évite les discordances d'hydratation (SSR vs Client)
   const currentYear = mounted ? new Date().getFullYear() : 2027;
+
+  if (!mounted) return null;
 
   return (
     <footer className="pt-12 pb-8 border-t border-white/5 bg-black text-white relative overflow-hidden">
