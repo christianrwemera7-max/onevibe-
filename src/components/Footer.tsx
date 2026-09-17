@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -20,13 +19,11 @@ export function Footer() {
 
   return (
     <footer className="pt-24 pb-12 border-t border-white/5 bg-black text-white relative overflow-hidden">
-      {/* Background flair */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary/5 blur-[150px] -z-10" />
 
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
           
-          {/* Brand Column */}
           <div className="space-y-6 col-span-1 md:col-span-1">
             <div className="flex flex-col leading-none">
               <div className="text-[24px] font-black tracking-tighter uppercase italic flex items-center gap-2">
@@ -52,7 +49,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Contact Column */}
           <div className="space-y-6">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">CONTACTEZ-NOUS</h3>
             <div className="space-y-4">
@@ -77,7 +73,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Quick Links Column */}
           <div className="space-y-6">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">NAVIGATION</h3>
             <ul className="space-y-3">
@@ -88,7 +83,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Location Column */}
           <div className="space-y-6">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">LOCALISATION</h3>
             <div className="flex items-start gap-3">
@@ -108,7 +102,6 @@ export function Footer() {
 
         </div>
 
-        {/* Bottom Bar */}
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.3em] italic">
             © {new Date().getFullYear()} {eventName} FEST • TOUS DROITS RÉSERVÉS.
