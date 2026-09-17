@@ -1,31 +1,38 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc } from 'firebase/firestore';
-import { signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Key } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Key, Shield } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Redirect if not the official admin email
+  useEffect(() => {
+    if (!isUserLoading && user && user.email !== 'christianrwemera4@gmail.com') {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const [email, setEmail] = useState('christianrwemera4@gmail.com');
   const [password, setPassword] = useState('0994472599');
-  const [newPassword, setNewPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Firestore Refs
   const festivalSettingsRef = useMemoFirebase(() => {
@@ -39,12 +46,6 @@ export default function AdminDashboard() {
     return collection(firestore, 'program');
   }, [firestore]);
   const { data: programItems } = useCollection(programCollectionRef);
-
-  const talentsCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'talents');
-  }, [firestore]);
-  const { data: talentsItems } = useCollection(talentsCollectionRef);
 
   const registrationsCollectionRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -61,30 +62,11 @@ export default function AdminDashboard() {
     setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Accès autorisé", description: "Bienvenue dans le cockpit ONE VIBE." });
+      toast({ title: "Accès autorisé", description: "Cockpit ONE VIBE activé." });
     } catch (err: any) {
-      let message = "Identifiants invalides.";
-      if (err.code === 'auth/invalid-credential') {
-        message = "Compte introuvable ou mot de passe incorrect. Vérifiez votre console Firebase.";
-      }
-      toast({ variant: "destructive", title: "Accès refusé", description: message });
+      toast({ variant: "destructive", title: "Accès refusé", description: "Identifiants administrateur invalides." });
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth.currentUser || !newPassword) return;
-    setIsUpdatingPassword(true);
-    try {
-      await updatePassword(auth.currentUser, newPassword);
-      toast({ title: "Succès", description: "Votre mot de passe a été mis à jour." });
-      setNewPassword('');
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: "Veuillez vous reconnecter avant de changer le mot de passe." });
-    } finally {
-      setIsUpdatingPassword(false);
     }
   };
 
@@ -129,17 +111,22 @@ export default function AdminDashboard() {
     });
   };
 
-  if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Chargement...</div>;
+  if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest italic">Chargement du noyau...</div>;
 
-  if (!user) {
+  // Si pas connecté OU pas le bon email
+  if (!user || user.email !== 'christianrwemera4@gmail.com') {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-white/5 border-white/10 text-white p-8">
-          <div className="text-center mb-8">
-            <div className="text-2xl font-black text-primary uppercase tracking-tighter">ONE VIBE <span className="text-white">ADMIN</span></div>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-2">Zone de contrôle restreinte</p>
+        <Card className="max-w-md w-full bg-black border-white/10 text-white p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <div className="text-2xl font-black text-white uppercase tracking-tighter">ACCÈS <span className="text-primary">ADMIN</span></div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] mt-2">Authentification requise</p>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             <div className="space-y-2">
               <Input 
                 type="email" 
@@ -147,7 +134,7 @@ export default function AdminDashboard() {
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
                 required 
-                className="bg-black border-white/10 text-xs h-12 rounded-xl"
+                className="bg-white/5 border-white/10 text-xs h-14 rounded-2xl focus:ring-primary"
               />
               <Input 
                 type="password" 
@@ -155,15 +142,12 @@ export default function AdminDashboard() {
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 required 
-                className="bg-black border-white/10 text-xs h-12 rounded-xl"
+                className="bg-white/5 border-white/10 text-xs h-14 rounded-2xl focus:ring-primary"
               />
             </div>
-            <Button disabled={isLoggingIn} type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 uppercase text-[10px] tracking-widest rounded-xl">
-              {isLoggingIn ? "CONNEXION..." : "SE CONNECTER"}
+            <Button disabled={isLoggingIn} type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-black h-14 uppercase text-[10px] tracking-[0.3em] rounded-2xl mt-4 shadow-lg">
+              {isLoggingIn ? "OUVERTURE..." : "DÉVERROUILLER"}
             </Button>
-            <p className="text-[9px] text-center text-muted-foreground uppercase leading-relaxed mt-4">
-              Note : Assurez-vous d'avoir créé le compte christianrwemera4@gmail.com dans votre console Firebase Authentication.
-            </p>
           </form>
         </Card>
       </div>
@@ -176,126 +160,121 @@ export default function AdminDashboard() {
         
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
           <div className="flex items-center gap-4">
-            <div className="text-xl font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded ml-2">ADMIN</span></div>
+            <div className="text-xl font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[10px] bg-primary/20 text-primary px-3 py-1 rounded-full ml-2 font-black italic">CORE</span></div>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" className="text-xs h-9 border-white/20"><a href="/">Voir le site</a></Button>
-            <Button onClick={() => signOut(auth!)} variant="ghost" className="text-xs h-9 text-destructive hover:bg-destructive/10"><LogOut className="w-3.5 h-3.5 mr-2" /> Quitter</Button>
+          <div className="flex gap-4 items-center">
+            <span className="text-[10px] text-muted-foreground font-mono">{user.email}</span>
+            <Button asChild variant="outline" className="text-[9px] h-9 border-white/20 uppercase font-black"><a href="/">Quitter</a></Button>
+            <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black"><LogOut className="w-3.5 h-3.5 mr-2" /> Déconnexion</Button>
           </div>
         </div>
 
-        <Tabs defaultValue="hero" className="w-full">
-          <TabsList className="grid grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-xl mb-6">
-            <TabsTrigger value="hero" className="text-[10px] uppercase font-bold"><SettingsIcon className="w-3 h-3 mr-2" /> Hero</TabsTrigger>
-            <TabsTrigger value="program" className="text-[10px] uppercase font-bold"><Calendar className="w-3 h-3 mr-2" /> Programme</TabsTrigger>
-            <TabsTrigger value="talents" className="text-[10px] uppercase font-bold"><Users className="w-3 h-3 mr-2" /> Talents</TabsTrigger>
-            <TabsTrigger value="tickets" className="text-[10px] uppercase font-bold"><FileText className="w-3 h-3 mr-2" /> Inscriptions</TabsTrigger>
-            <TabsTrigger value="security" className="text-[10px] uppercase font-bold"><Lock className="w-3 h-3 mr-2" /> Sécurité</TabsTrigger>
+        <Tabs defaultValue="tickets" className="w-full">
+          <TabsList className="grid grid-cols-4 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
+            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Inscriptions</TabsTrigger>
+            <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Programme</TabsTrigger>
+            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Design</TabsTrigger>
+            <TabsTrigger value="security" className="text-[10px] uppercase font-black"><Lock className="w-3 h-3 mr-2" /> Sécurité</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="hero">
-            <Card className="bg-white/5 border-white/10 text-white">
-              <CardHeader><CardTitle className="text-base">Image Hero Principale</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <Input 
-                  placeholder="URL de l'image (1920x1080)"
-                  value={heroInput}
-                  onChange={(e) => setHeroInput(e.target.value)}
-                  className="bg-black border-white/10 text-xs"
-                />
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-bold text-xs uppercase rounded-xl"><Save className="w-4 h-4 mr-2" /> Mettre à jour</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="program">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="bg-white/5 border-white/10 text-white">
-                <CardHeader><CardTitle className="text-base">Nouvel Événement</CardTitle></CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAddProgram} className="space-y-3">
-                    <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs rounded-lg" />
-                    <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs rounded-lg" />
-                    <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs rounded-lg" />
-                    <Button type="submit" className="w-full bg-secondary text-black font-black text-xs uppercase rounded-xl"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
-                  </form>
-                </CardContent>
-              </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white">
-                <CardHeader><CardTitle className="text-base">Programme Actuel</CardTitle></CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader className="border-white/10">
-                      <TableRow className="border-white/10 hover:bg-transparent">
-                        <TableHead className="text-white text-[10px]">Heure</TableHead>
-                        <TableHead className="text-white text-[10px]">Activité</TableHead>
-                        <TableHead className="text-white text-[10px] text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {programItems?.map((item) => (
-                        <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
-                          <TableCell className="font-bold text-primary text-xs">{item.time}</TableCell>
-                          <TableCell className="text-xs">{item.title}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="icon" variant="ghost" className="text-destructive h-7 w-7" onClick={() => handleDeleteDoc('program', item.id)}><Trash className="w-3.5 h-3.5" /></Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="security">
-            <Card className="bg-white/5 border-white/10 text-white">
-              <CardHeader><CardTitle className="text-base">Changer le Mot de Passe</CardTitle></CardHeader>
-              <CardContent>
-                <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
-                  <Input 
-                    type="password" 
-                    placeholder="Nouveau mot de passe" 
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    required
-                    className="bg-black border-white/10 text-xs rounded-xl"
-                  />
-                  <Button disabled={isUpdatingPassword} type="submit" className="bg-secondary text-black font-black text-xs uppercase rounded-xl">
-                    <Key className="w-4 h-4 mr-2" /> {isUpdatingPassword ? "Mise à jour..." : "Modifier"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="tickets">
-            <Card className="bg-white/5 border-white/10 text-white">
-              <CardHeader><CardTitle className="text-base">Inscriptions Reçues</CardTitle></CardHeader>
-              <CardContent>
+            <Card className="bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
+              <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Liste des Participants</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <Table>
-                  <TableHeader className="border-white/10">
+                  <TableHeader className="bg-black/20 border-white/10">
                     <TableRow className="border-white/10 hover:bg-transparent">
-                      <TableHead className="text-white text-[10px]">Utilisateur</TableHead>
-                      <TableHead className="text-white text-[10px]">Pass</TableHead>
-                      <TableHead className="text-white text-[10px]">Code QR</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Participant</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Type de Pass</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6">Identifiant Unique</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black tracking-widest px-6 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {registrations?.map((reg) => (
-                      <TableRow key={reg.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell>
-                          <div className="font-bold text-xs">{reg.name}</div>
-                          <div className="text-[9px] text-muted-foreground">{reg.email}</div>
+                      <TableRow key={reg.id} className="border-white/5 hover:bg-white/[0.03]">
+                        <TableCell className="px-6 py-4">
+                          <div className="font-black text-xs uppercase italic">{reg.name}</div>
+                          <div className="text-[9px] text-muted-foreground lowercase font-mono">{reg.email}</div>
                         </TableCell>
-                        <TableCell><span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase">{reg.passCategory || reg.type}</span></TableCell>
-                        <TableCell className="font-mono text-[9px] text-white/60">{reg.ticketCode}</TableCell>
+                        <TableCell className="px-6">
+                          <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-black uppercase italic">
+                            {reg.passCategory || reg.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 font-mono text-[10px] text-white/40">{reg.ticketCode}</TableCell>
+                        <TableCell className="px-6 text-right">
+                          <Button size="icon" variant="ghost" className="text-destructive/50 hover:text-destructive h-8 w-8" onClick={() => handleDeleteDoc('registrations', reg.id)}><Trash className="w-3.5 h-3.5" /></Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="program">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6">
+                <h3 className="text-xs font-black uppercase tracking-widest mb-6">Ajouter un créneau</h3>
+                <form onSubmit={handleAddProgram} className="space-y-4">
+                  <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 16:30)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Brève description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter au flux</Button>
+                </form>
+              </Card>
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-black/20">
+                    <TableRow className="border-white/10">
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Timing</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Activité</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6 text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {programItems?.map((item) => (
+                      <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
+                        <TableCell className="px-6 font-black text-primary text-xs italic">{item.time}</TableCell>
+                        <TableCell className="px-6 text-xs font-bold uppercase">{item.title}</TableCell>
+                        <TableCell className="px-6 text-right">
+                          <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('program', item.id)}><Trash className="w-3.5 h-3.5" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="hero">
+            <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-8 max-w-2xl">
+              <h3 className="text-xs font-black uppercase tracking-widest mb-6 italic">Configuration Visuelle</h3>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-2">Image Hero (1920x1080)</label>
+                  <Input 
+                    placeholder="URL de l'image de fond"
+                    value={heroInput}
+                    onChange={(e) => setHeroInput(e.target.value)}
+                    className="bg-black border-white/10 text-xs h-14 rounded-2xl"
+                  />
+                </div>
+                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest"><Save className="w-4 h-4 mr-2" /> Déployer les changements</Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-8 max-w-md">
+              <h3 className="text-xs font-black uppercase tracking-widest mb-4">Gestion Administrative</h3>
+              <p className="text-[10px] text-muted-foreground mb-6 leading-relaxed">Le compte <span className="text-white font-bold">christianrwemera4@gmail.com</span> est le seul habilité à accéder à ce noyau.</p>
+              <Button onClick={() => signOut(auth!)} variant="destructive" className="w-full h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest"><LogOut className="w-4 h-4 mr-2" /> Forcer la déconnexion</Button>
             </Card>
           </TabsContent>
         </Tabs>

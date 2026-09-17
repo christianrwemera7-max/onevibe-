@@ -14,12 +14,14 @@ import {
   QrCode,
   ShieldCheck,
   Lock,
-  Mail
+  Mail,
+  LogOut,
+  User as UserIcon,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 
 import imagesData from './lib/placeholder-images.json';
@@ -87,9 +89,19 @@ const defaultProgram = [
 export default function VibeFestLanding() {
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   
+  const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
+  const [authData, setAuthData] = useState({ email: '', password: '' });
+  const [isAuthPending, setIsAuthPending] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<'FORM' | 'TICKET'>('FORM');
+  const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
+  const [formData, setFormData] = useState({ name: '', phone: '', passCategory: 'STANDARD' });
+  const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
+
   const settingsDocRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return doc(firestore, 'settings', 'festival');
@@ -110,52 +122,30 @@ export default function VibeFestLanding() {
   const heroImage = festivalSettings?.heroImageUrl || getImg('hero-bg');
   const activeProgram = dynamicProgram && dynamicProgram.length > 0 ? [...dynamicProgram].sort((a,b) => a.time.localeCompare(b.time)) : defaultProgram;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
-  const [modalStep, setModalStep] = useState<'AUTH' | 'FORM' | 'TICKET'>('AUTH');
-  const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('SIGNUP');
-  
-  const [authData, setAuthData] = useState({ email: '', password: '' });
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    passCategory: 'STANDARD',
-    company: '',
-    message: ''
-  });
-  const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({ ...prev, email: user.email || '', name: user.displayName || prev.name }));
-    }
-  }, [user]);
-
-  const handleOpenForm = (type: 'PASS' | 'EXPOSITOR', category?: string) => {
-    setFormType(type);
-    if (category) {
-      setFormData(prev => ({ ...prev, passCategory: category }));
-    }
-    setModalStep(user ? 'FORM' : 'AUTH');
-    setIsModalOpen(true);
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
+    setIsAuthPending(true);
     try {
       if (authMode === 'SIGNUP') {
         await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Bienvenue !", description: "Votre compte a été créé avec succès." });
+        toast({ title: "Bienvenue !", description: "Votre compte a été créé." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Bon retour !", description: "Connexion réussie." });
+        toast({ title: "Content de vous revoir !", description: "Connexion réussie." });
       }
-      setModalStep('FORM');
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: "Veuillez vérifier vos identifiants." });
+      toast({ variant: "destructive", title: "Erreur", description: "Identifiants incorrects ou compte inexistant." });
+    } finally {
+      setIsAuthPending(false);
     }
+  };
+
+  const handleOpenForm = (type: 'PASS' | 'EXPOSITOR', category: string = 'STANDARD') => {
+    setFormType(type);
+    setFormData(prev => ({ ...prev, passCategory: category }));
+    setModalStep('FORM');
+    setIsModalOpen(true);
   };
 
   const handleSubmitRegistration = (e: React.FormEvent) => {
@@ -166,12 +156,10 @@ export default function VibeFestLanding() {
     const submissionData = {
       userId: user.uid,
       name: formData.name,
-      email: formData.email,
+      email: user.email,
       phone: formData.phone,
       type: formType,
       passCategory: formType === 'PASS' ? formData.passCategory : null,
-      company: formType === 'EXPOSITOR' ? formData.company : null,
-      message: formData.message,
       ticketCode: uniqueTicketId,
       createdAt: new Date().toISOString()
     };
@@ -186,44 +174,117 @@ export default function VibeFestLanding() {
 
     setGeneratedTicket(uniqueTicketId);
     setModalStep('TICKET');
-    toast({
-      title: "C'est fait !",
-      description: "Votre réservation est confirmée.",
-    });
   };
 
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-white font-black text-[10px] tracking-widest uppercase">Initialisation de la vibe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // GATEKEEPING: Si pas de user, on affiche l'écran de connexion
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full"
+        >
+          <div className="text-center mb-10">
+            <div className="text-3xl font-black tracking-tighter text-white uppercase inline-flex items-center gap-2">
+              ONE<span className="text-primary">VIBE</span> <Sparkles className="text-primary w-5 h-5" />
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-2">Connectez-vous pour entrer dans le festival</p>
+          </div>
+
+          <Card className="bg-white/5 border-white/10 text-white p-8 rounded-3xl backdrop-blur-xl">
+            <form onSubmit={handleAuth} className="space-y-4">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3.5 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    type="email" 
+                    placeholder="Email" 
+                    required 
+                    className="bg-black/50 border-white/10 pl-10 h-12 text-sm rounded-xl focus:ring-primary"
+                    value={authData.email}
+                    onChange={e => setAuthData({...authData, email: e.target.value})}
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3.5 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    type="password" 
+                    placeholder="Mot de passe" 
+                    required 
+                    className="bg-black/50 border-white/10 pl-10 h-12 text-sm rounded-xl focus:ring-primary"
+                    value={authData.password}
+                    onChange={e => setAuthData({...authData, password: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <Button disabled={isAuthPending} type="submit" className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl text-xs uppercase tracking-widest">
+                {isAuthPending ? "TRAITEMENT..." : (authMode === 'SIGNUP' ? "CRÉER MON COMPTE" : "ENTRER DANS LA VIBE")}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button 
+                onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
+                className="text-[10px] text-muted-foreground hover:text-white uppercase font-bold tracking-widest transition-colors"
+              >
+                {authMode === 'SIGNUP' ? "DÉJÀ INSCRIT ? CONNECTEZ-VOUS" : "NOUVEAU ? CRÉEZ UN COMPTE"}
+              </button>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // APP CONTENU: Affiché seulement si connecté
   return (
     <div className="bg-background text-foreground font-sans antialiased min-h-screen selection:bg-primary selection:text-white">
       
       {/* NAVIGATION */}
       <nav className="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-          <a href="#" className="flex flex-col leading-none group">
+          <a href="#" className="flex flex-col leading-none">
             <div className="text-xl md:text-2xl font-black tracking-tighter text-white uppercase">
               ONE<span className="text-primary">VIBE</span>
             </div>
-            <div className="text-[9px] font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1">
-              <span>FEST</span>
-              <span className="text-primary font-light">|</span>
-              <span className="text-white">2027</span>
-            </div>
+            <div className="text-[9px] font-bold tracking-widest text-muted-foreground uppercase">FEST | 2027</div>
           </a>
           
-          <div className="hidden lg:flex items-center gap-6 font-bold text-xs uppercase tracking-widest">
-            <a href="#univers" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">UNIVERS</a>
-            <a href="#programme" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">PROGRAMME</a>
-            <a href="#pass" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">PASS</a>
-            {user && (
-              <div className="flex items-center gap-4">
-                <span className="text-[9px] text-primary">{user.email}</span>
-                <button onClick={() => signOut(auth!)} className="text-[9px] text-muted-foreground hover:text-white">QUITTER</button>
-              </div>
+          <div className="hidden lg:flex items-center gap-8 font-bold text-[10px] uppercase tracking-widest">
+            <a href="#univers" className="hover:text-primary transition-colors text-muted-foreground">UNIVERS</a>
+            <a href="#programme" className="hover:text-primary transition-colors text-muted-foreground">PROGRAMME</a>
+            {/* L'espace admin n'est visible que pour l'admin spécifique */}
+            {user.email === 'christianrwemera4@gmail.com' && (
+              <a href="/admin" className="text-secondary hover:text-secondary/80 flex items-center gap-2 border border-secondary/20 px-3 py-1 rounded-full bg-secondary/5">
+                <Lock className="w-3 h-3" /> ADMIN
+              </a>
             )}
-            {!user && <a href="/admin" className="text-secondary text-[10px]">ADMIN</a>}
+            <div className="flex items-center gap-4 pl-4 border-l border-white/10">
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] text-muted-foreground">CONNECTÉ EN TANT QUE</span>
+                <span className="text-primary text-[9px] lowercase font-mono">{user.email}</span>
+              </div>
+              <button onClick={() => signOut(auth!)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-white transition-colors">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          <Button size="sm" onClick={() => handleOpenForm('PASS', 'STANDARD')} className="font-bold rounded-full bg-primary hover:bg-primary/90 text-white text-[10px] px-6">
-            PRENDRE MON PASS
+          <Button size="sm" onClick={() => handleOpenForm('PASS', 'STANDARD')} className="font-bold rounded-full bg-primary hover:bg-primary/90 text-white text-[10px] px-6 lg:hidden">
+            BILLETTERIE
           </Button>
         </div>
       </nav>
@@ -232,172 +293,89 @@ export default function VibeFestLanding() {
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
           <Image src={heroImage} alt="Festival background" fill className="object-cover opacity-50" priority data-ai-hint="festival crowd" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/60" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 w-full relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6 text-[10px] font-semibold uppercase tracking-wider">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6 text-[10px] font-semibold uppercase tracking-wider"
+          >
             <span className="text-primary">26 JUIN 2027</span>
             <span className="text-white/20">|</span>
-            <span className="text-secondary">INEPSS</span>
-            <span className="text-white/20">|</span>
-            <span className="text-white">12:00 - 22:00</span>
-          </div>
+            <span className="text-white">INEPSS</span>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-8xl font-black leading-[0.9] tracking-tight mb-4 uppercase">
+          <h1 className="text-6xl md:text-9xl font-black leading-[0.85] tracking-tighter mb-6 uppercase italic">
             ONE VIBE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary">FEST | 2027</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary">GENERATION</span>
           </h1>
 
-          <p className="text-sm md:text-xl text-muted-foreground max-w-xl font-medium mb-8 mx-auto md:mx-0">
-            L'inscription est désormais ouverte. Connectez-vous pour obtenir votre pass numérique et rejoindre la vibe.
-          </p>
-
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-            <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} size="lg" className="h-14 px-8 text-xs font-bold rounded-full bg-primary text-white uppercase tracking-wider">
-              S'INSCRIRE & RÉSERVER <ArrowRight className="ml-2 w-4 h-4" />
+            <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} size="lg" className="h-16 px-10 text-[10px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,0,128,0.3)] hover:scale-105 transition-transform">
+              RÉSERVER MON PASS <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </div>
         </div>
       </section>
 
       {/* UNIVERS */}
-      <section id="univers" className="py-24 bg-black">
+      <section id="univers" className="py-32 bg-black border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-5xl uppercase mb-2 font-black tracking-tight">
-              4 UNIVERS. <span className="text-secondary">1 ÉNERGIE.</span>
-            </h2>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Vivez l'expérience INEPSS</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {universes.map((uni, idx) => (
-              <Card key={idx} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group">
-                <div className="relative h-48 w-full">
-                  <Image src={uni.image} alt={uni.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                    <h3 className="text-xl font-black text-white tracking-wide uppercase">{uni.title}</h3>
+              <div key={idx} className="group cursor-pointer">
+                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden mb-6">
+                  <Image src={uni.image} alt={uni.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-px bg-primary" />
+                      <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Explore</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-white tracking-tighter uppercase">{uni.title}</h3>
                   </div>
                 </div>
-                <CardContent className="p-6">
-                  <p className="text-muted-foreground text-xs mb-6 leading-relaxed">{uni.description}</p>
-                  <div className="space-y-2">
-                    {uni.activities.map((act, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-[11px] group/item hover:bg-white/10 transition-colors">
-                        <div>
-                          <span className="font-bold text-white block">{act.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{act.desc}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover/item:text-primary transition-colors" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                <p className="text-muted-foreground text-xs leading-relaxed px-2">{uni.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* PASS */}
-      <section id="pass" className="py-24 bg-primary text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4">LE PASS NUMÉRIQUE</h2>
-          <p className="text-sm mb-12 text-white/80">Inscription obligatoire pour sécuriser votre billet.</p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Card className="bg-background text-foreground rounded-2xl p-8 border-none shadow-2xl">
-              <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-2">PASS STANDARD</h3>
-              <div className="text-4xl font-black mb-4">10.000 <span className="text-sm font-bold text-muted-foreground">FC</span></div>
-              <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} className="w-full h-12 rounded-full font-bold bg-primary text-white text-xs uppercase tracking-widest">OBTENIR LE PASS</Button>
-            </Card>
-
-            <Card className="bg-black text-white rounded-2xl p-8 border border-white/10 relative shadow-2xl">
-              <div className="absolute top-6 right-6 bg-secondary text-black text-[9px] font-black px-2 py-0.5 rounded-full">PREMIUM</div>
-              <h3 className="text-xs font-black text-white/60 uppercase tracking-widest mb-2">PASS VIP</h3>
-              <div className="text-4xl font-black mb-4 text-secondary">30.000 <span className="text-sm font-bold text-white/60">FC</span></div>
-              <Button onClick={() => handleOpenForm('PASS', 'VIP')} className="w-full h-12 rounded-full font-bold bg-white text-black text-xs uppercase tracking-widest">ACCÈS VIP</Button>
-            </Card>
-          </div>
+      {/* FOOTER */}
+      <footer className="py-12 border-t border-white/10 bg-black text-center">
+        <div className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.3em]">
+          ONE VIBE FEST © 2027 • TOUS DROITS RÉSERVÉS
         </div>
-      </section>
+      </footer>
 
-      {/* MODAL CHECKOUT / AUTH */}
+      {/* MODAL RESERVATION */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
             <motion.div 
               initial={{ opacity: 0, y: 20 }} 
               animate={{ opacity: 1, y: 0 }} 
               exit={{ opacity: 0, y: 20 }} 
-              className="bg-neutral-950 border border-white/10 rounded-2xl p-8 max-w-md w-full relative text-white"
+              className="bg-neutral-900 border border-white/10 rounded-[2rem] p-10 max-w-md w-full relative text-white"
             >
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 p-2 text-muted-foreground hover:text-white"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-2 text-muted-foreground hover:text-white transition-colors"><X className="w-6 h-6" /></button>
               
-              {modalStep === 'AUTH' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-black uppercase mb-2">{authMode === 'SIGNUP' ? 'INSCRIPTION' : 'CONNEXION'}</h3>
-                    <p className="text-xs text-muted-foreground">Rejoignez la vibe pour réserver votre pass.</p>
-                  </div>
-                  
-                  <form onSubmit={handleAuth} className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          type="email" 
-                          placeholder="Email" 
-                          required 
-                          className="bg-black border-white/10 pl-10 h-12 text-sm rounded-xl"
-                          value={authData.email}
-                          onChange={e => setAuthData({...authData, email: e.target.value})}
-                        />
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          type="password" 
-                          placeholder="Mot de passe" 
-                          required 
-                          className="bg-black border-white/10 pl-10 h-12 text-sm rounded-xl"
-                          value={authData.password}
-                          onChange={e => setAuthData({...authData, password: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    
-                    <Button type="submit" className="w-full h-12 bg-primary text-white font-bold rounded-xl text-xs uppercase tracking-widest">
-                      {authMode === 'SIGNUP' ? "CRÉER MON COMPTE" : "SE CONNECTER"}
-                    </Button>
-                  </form>
-                  
-                  <div className="text-center">
-                    <button 
-                      onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
-                      className="text-[10px] text-muted-foreground hover:text-primary uppercase font-bold tracking-widest"
-                    >
-                      {authMode === 'SIGNUP' ? "DÉJÀ INSCRIT ? CONNECTEZ-VOUS" : "PAS DE COMPTE ? INSCRIVEZ-VOUS"}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {modalStep === 'FORM' && (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="text-center">
-                    <h3 className="text-2xl font-black uppercase mb-1">FINALISATION</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Validez vos coordonnées</p>
+                    <h3 className="text-3xl font-black uppercase tracking-tighter italic">RESERVER</h3>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-2 font-bold">Validez votre participation</p>
                   </div>
 
                   <form onSubmit={handleSubmitRegistration} className="space-y-4">
                     <div className="space-y-3">
                       <Input 
-                        placeholder="Nom complet" 
+                        placeholder="Votre nom complet" 
                         required 
-                        className="bg-black border-white/10 h-12 text-sm rounded-xl"
+                        className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl"
                         value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
                       />
@@ -405,54 +383,56 @@ export default function VibeFestLanding() {
                         placeholder="Téléphone" 
                         required 
                         type="tel"
-                        className="bg-black border-white/10 h-12 text-sm rounded-xl"
+                        className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl"
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                       />
-                      {formType === 'PASS' && (
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-[11px] text-muted-foreground text-center">
-                          TYPE DE PASS : <span className="text-primary font-bold">{formData.passCategory}</span>
-                        </div>
-                      )}
+                      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 text-[10px] text-center">
+                        CATÉGORIE : <span className="text-primary font-black uppercase">{formData.passCategory}</span>
+                      </div>
                     </div>
                     
-                    <Button type="submit" className="w-full h-12 bg-secondary text-black font-black rounded-xl text-xs uppercase tracking-widest">
-                      RÉSERVER MON BILLET
+                    <Button type="submit" className="w-full h-14 bg-secondary text-black font-black rounded-2xl text-[10px] uppercase tracking-widest">
+                      CONFIRMER MA RÉSERVATION
                     </Button>
                   </form>
                 </div>
               )}
 
-              {modalStep === 'TICKET' && (
-                <div className="text-center space-y-6">
-                  <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary">
-                    <ShieldCheck className="w-8 h-8" />
+              {modalStep === 'TICKET' && (generatedTicket && (
+                <div className="text-center space-y-8 py-4">
+                  <div className="w-20 h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary animate-pulse">
+                    <ShieldCheck className="w-10 h-10" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black uppercase">VOTRE PASS EST PRÊT</h3>
-                    <p className="text-xs text-muted-foreground mt-2">Rendez-vous à l'INEPSS le 26 Juin.</p>
+                    <h3 className="text-3xl font-black uppercase italic">VIBE ACTIVÉE</h3>
+                    <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Billet numérique généré avec succès</p>
                   </div>
                   
-                  <div className="bg-white text-black p-6 rounded-2xl space-y-4 text-left shadow-2xl">
-                    <div className="border-b border-neutral-200 pb-4">
-                      <div className="text-[10px] font-black text-primary uppercase">ONE VIBE FEST 2027</div>
-                      <div className="text-xl font-black uppercase truncate">{formData.name}</div>
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase">PASS {formData.passCategory}</div>
+                  <div className="bg-white text-black p-8 rounded-[2rem] space-y-6 text-left shadow-2xl overflow-hidden relative">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+                    <div className="border-b-2 border-dashed border-neutral-200 pb-6 relative z-10">
+                      <div className="text-[10px] font-black text-primary uppercase mb-1">ONE VIBE FEST</div>
+                      <div className="text-2xl font-black uppercase tracking-tighter">{formData.name}</div>
+                      <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1">PASS {formData.passCategory} • 26 JUIN</div>
                     </div>
-                    <div className="flex gap-4 items-center">
-                      <QrCode className="w-16 h-16 text-black" />
-                      <div className="text-[10px] space-y-1">
-                        <div className="font-mono font-bold">{generatedTicket}</div>
-                        <div className="font-bold">INEPSS | 12:00 - 22:00</div>
+                    <div className="flex gap-6 items-center relative z-10">
+                      <div className="p-2 bg-neutral-100 rounded-xl">
+                        <QrCode className="w-16 h-16 text-black" />
+                      </div>
+                      <div className="text-[9px] space-y-1 font-bold">
+                        <div className="font-mono text-primary">{generatedTicket}</div>
+                        <div className="uppercase">INEPSS • KINSHASA</div>
+                        <div className="text-muted-foreground">12:00 - 22:00</div>
                       </div>
                     </div>
                   </div>
                   
-                  <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-bold uppercase text-xs rounded-xl h-12 tracking-widest">
-                    TERMINER
+                  <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-black uppercase text-[10px] rounded-2xl h-14 tracking-[0.2em]">
+                    PRÊT POUR LA VIBE
                   </Button>
                 </div>
-              )}
+              ))}
             </motion.div>
           </div>
         )}
