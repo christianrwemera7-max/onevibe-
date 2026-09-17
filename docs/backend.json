@@ -53,6 +53,8 @@
         "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
         "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
         "heroImageUrl": { "type": "string" },
+        "heroImageUrl2": { "type": "string" },
+        "heroImageUrl3": { "type": "string" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
         "isCarouselEnabled": { "type": "boolean" },

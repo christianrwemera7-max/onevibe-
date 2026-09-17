@@ -66,19 +66,19 @@ export default function LandingPage() {
   const images = useMemo(() => {
     const list: string[] = [];
     
-    // On priorise Cloudinary ou les URLs directes connues
-    if (isValidUrl(settings?.heroImageUrl)) {
-      list.push(settings.heroImageUrl);
-    }
+    // Ajout des 3 images Hero prioritaires
+    if (isValidUrl(settings?.heroImageUrl)) list.push(settings.heroImageUrl);
+    if (isValidUrl(settings?.heroImageUrl2)) list.push(settings.heroImageUrl2);
+    if (isValidUrl(settings?.heroImageUrl3)) list.push(settings.heroImageUrl3);
     
-    // Si le carousel est activé, on ajoute les images des talents
+    // Si le carousel des guests est activé, on ajoute les images des talents
     if (settings?.isCarouselEnabled && talents && talents.length > 0) {
       talents.forEach(t => {
         if (isValidUrl(t.imageUrl)) list.push(t.imageUrl);
       });
     }
 
-    // Fallback si la liste est vide ou si les images sont suspectes (ex: pin.it qui n'est pas un lien direct)
+    // Fallback si la liste est vide
     if (list.length === 0) {
       list.push("https://picsum.photos/seed/vibehero/1920/1080");
     }
@@ -87,7 +87,7 @@ export default function LandingPage() {
   }, [settings, talents]);
 
   useEffect(() => {
-    if (!settings?.isCarouselEnabled || images.length <= 1) {
+    if (images.length <= 1) {
       setCurrentIndex(0);
       return;
     }
@@ -95,7 +95,7 @@ export default function LandingPage() {
       setCurrentIndex(prev => (prev + 1) % images.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [settings?.isCarouselEnabled, images]);
+  }, [images]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +193,6 @@ export default function LandingPage() {
     );
   }
 
-  // Sécurité pour l'URL de l'image : si c'est un lien Pinterest court, next/image peut échouer même si l'hôte est autorisé
-  // car ce n'est pas un lien direct vers un fichier image.
   const currentImage = images[currentIndex];
   const isDirectImage = currentImage && !currentImage.includes('pin.it');
 
@@ -210,7 +208,7 @@ export default function LandingPage() {
                 fill 
                 className="object-cover opacity-80 brightness-90" 
                 priority 
-                unoptimized={currentImage.includes('pin.it')} // Évite le traitement Next.js pour les liens Pinterest
+                unoptimized={currentImage.includes('pin.it')}
               />
             ) : (
               <img 

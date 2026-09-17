@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -74,6 +76,8 @@ export default function AdminDashboard() {
 
   // Media Settings
   const [heroInput, setHeroInput] = useState('');
+  const [heroInput2, setHeroInput2] = useState('');
+  const [heroInput3, setHeroInput3] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
   const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
@@ -100,6 +104,8 @@ export default function AdminDashboard() {
       setFacebookUrl(settings.facebookUrl || '');
       setTiktokUrl(settings.tiktokUrl || '');
       setHeroInput(settings.heroImageUrl || '');
+      setHeroInput2(settings.heroImageUrl2 || '');
+      setHeroInput3(settings.heroImageUrl3 || '');
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
       setIsCarouselEnabled(settings.isCarouselEnabled || false);
@@ -151,7 +157,11 @@ export default function AdminDashboard() {
     const data = {
       eventName, eventTagline, eventDate, eventLocation,
       instagramUrl, twitterUrl, facebookUrl, tiktokUrl,
-      heroImageUrl: heroInput, ticketingUrl: ticketingInput, teaserUrl: teaserInput,
+      heroImageUrl: heroInput, 
+      heroImageUrl2: heroInput2, 
+      heroImageUrl3: heroInput3, 
+      ticketingUrl: ticketingInput, 
+      teaserUrl: teaserInput,
       isCarouselEnabled, musicDesc, musicImg, creativeDesc, creativeImg, digitalDesc, digitalImg,
       updatedAt: new Date().toISOString()
     };
@@ -307,10 +317,12 @@ export default function AdminDashboard() {
 
           <TabsContent value="hero">
             <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Médias et Liens Extérieurs</h3>
+              <div className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Images du Carousel (Page d'accueil)</h3>
+                
+                {/* Image 1 */}
                 <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO (TOUS FORMATS)</label>
+                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 1 (PRINCIPALE)</label>
                   <div className="flex gap-2">
                     <Input value={heroInput} onChange={e => setHeroInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
                     <div className="relative">
@@ -321,7 +333,48 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+
+                {/* Image 2 */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 2</label>
+                  <div className="flex gap-2">
+                    <Input value={heroInput2} onChange={e => setHeroInput2(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setHeroInput2, 'hero2')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero2'}>
+                        {isUploading === 'hero2' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image 3 */}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 3</label>
+                  <div className="flex gap-2">
+                    <Input value={heroInput3} onChange={e => setHeroInput3(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setHeroInput3, 'hero3')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero3'}>
+                        {isUploading === 'hero3' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4 p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                  <Switch 
+                    id="carousel-guests" 
+                    checked={isCarouselEnabled} 
+                    onCheckedChange={setIsCarouselEnabled} 
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="carousel-guests" className="text-[10px] font-black uppercase italic">ACTIVER LE CAROUSEL DES GUESTS</Label>
+                    <p className="text-[8px] text-muted-foreground uppercase font-bold">Affiche les photos des artistes dans le défilement d'accueil</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 pt-4 border-t border-white/5">
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase font-black text-muted-foreground">LIEN BILLETTERIE</label>
                     <Input value={ticketingInput} onChange={e => setTicketingInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
