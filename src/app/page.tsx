@@ -8,24 +8,18 @@ import {
   Palette, 
   Briefcase, 
   Gamepad2, 
-  Calendar, 
-  MapPin, 
   ArrowRight,
-  ShoppingBag,
   X,
   ChevronRight,
   QrCode,
   ShieldCheck,
-  User,
   Lock,
   Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 
 import imagesData from './lib/placeholder-images.json';
@@ -46,11 +40,9 @@ const universes = [
     description: "Vibrations et connexions sonores majeures.",
     activities: [
       { name: "Concerts & Showcases", desc: "Invités majeurs + talents de demain." },
-      { name: "ONE VIBE Open Mic", desc: "Scène libre pour se révéler." },
       { name: "DJ Battle", desc: "Duels rythmés arbitrés par le public." }
     ],
-    image: getImg('music-vibe'),
-    badge: "GRAND SHOW"
+    image: getImg('music-vibe')
   },
   {
     title: "VIBE CREATIVE",
@@ -58,23 +50,19 @@ const universes = [
     description: "Création artistique pure, visuelle et stylistique.",
     activities: [
       { name: "Fashion Show", desc: "Présentations de jeunes créateurs." },
-      { name: "Live Painting", desc: "Fresques monumentales en direct." },
-      { name: "Creative Market", desc: "Designers, mode et art visuel." }
+      { name: "Live Painting", desc: "Fresques monumentales en direct." }
     ],
-    image: getImg('creative-vibe'),
-    badge: "FASHION SHOW"
+    image: getImg('creative-vibe')
   },
   {
     title: "VIBE BUSINESS",
     icon: <Briefcase className="w-4 h-4 text-blue-400" />,
     description: "Impulsion entrepreneuriale et concrétisation.",
     activities: [
-      { name: "ONE VIBE Pitch", desc: "Projets audacieux face aux mentors." },
       { name: "Startup & Brand Village", desc: "Marques et initiatives d'avenir." },
       { name: "ONE VIBE Connect", desc: "Rencontres B2B stratégiques." }
     ],
-    image: getImg('business-vibe'),
-    badge: "ONE VIBE PITCH"
+    image: getImg('business-vibe')
   },
   {
     title: "VIBE DIGITAL",
@@ -82,26 +70,18 @@ const universes = [
     description: "Culture numérique, gaming et nouveaux médias.",
     activities: [
       { name: "Gaming / E-sport", desc: "Tournois intenses avec cashprize." },
-      { name: "Content Challenge", desc: "Créations de contenus viraux." },
       { name: "Digital Experience", desc: "Immersion interactive & démos." }
     ],
-    image: getImg('digital-vibe'),
-    badge: "GAMING CHALLENGE"
+    image: getImg('digital-vibe')
   }
 ];
 
 const defaultProgram = [
-  { time: "12:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques.", imageUrl: getImg('hero-bg') },
-  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale e-sport.", imageUrl: getImg('digital-vibe') },
-  { time: "16:00", title: "Creative Showcase", desc: "Défilé et performances artistiques.", imageUrl: getImg('creative-vibe') },
-  { time: "19:00", title: "Main Stage Concert", desc: "Têtes d'affiches nationales.", imageUrl: getImg('music-vibe') },
-  { time: "22:00", title: "Clôture", desc: "Fin de l'événement.", imageUrl: getImg('moment-1') }
-];
-
-const faqs = [
-  { q: "Où se déroule ONE VIBE FEST ?", a: "À l'INEPSS le 26 Juin." },
-  { q: "Quels sont les horaires ?", a: "De 12h00 à 22h00." },
-  { q: "Faut-il un compte ?", a: "Oui, vous devez vous inscrire avant de pouvoir réserver votre pass." }
+  { time: "12:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques." },
+  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale e-sport." },
+  { time: "16:00", title: "Creative Showcase", desc: "Défilé et performances artistiques." },
+  { time: "19:00", title: "Main Stage Concert", desc: "Têtes d'affiches nationales." },
+  { time: "22:00", title: "Clôture", desc: "Fin de l'événement." }
 ];
 
 export default function VibeFestLanding() {
@@ -122,12 +102,6 @@ export default function VibeFestLanding() {
   }, [firestore]);
   const { data: dynamicProgram } = useCollection(programCollectionRef);
 
-  const talentsCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'talents');
-  }, [firestore]);
-  const { data: dynamicTalents } = useCollection(talentsCollectionRef);
-
   const registrationsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'registrations');
@@ -135,11 +109,10 @@ export default function VibeFestLanding() {
 
   const heroImage = festivalSettings?.heroImageUrl || getImg('hero-bg');
   const activeProgram = dynamicProgram && dynamicProgram.length > 0 ? [...dynamicProgram].sort((a,b) => a.time.localeCompare(b.time)) : defaultProgram;
-  const activeTalents = dynamicTalents && dynamicTalents.length > 0 ? dynamicTalents : null;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
-  const [modalStep, setModalStep] = useState<'AUTH' | 'FORM' | 'PAYMENT' | 'TICKET'>('AUTH');
+  const [modalStep, setModalStep] = useState<'AUTH' | 'FORM' | 'TICKET'>('AUTH');
   const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('SIGNUP');
   
   const [authData, setAuthData] = useState({ email: '', password: '' });
@@ -148,7 +121,6 @@ export default function VibeFestLanding() {
     email: '',
     phone: '',
     passCategory: 'STANDARD',
-    paymentMethod: 'MOBILE_MONEY',
     company: '',
     message: ''
   });
@@ -175,14 +147,14 @@ export default function VibeFestLanding() {
     try {
       if (authMode === 'SIGNUP') {
         await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Compte créé !", description: "Vous pouvez maintenant continuer votre inscription." });
+        toast({ title: "Bienvenue !", description: "Votre compte a été créé avec succès." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Connexion réussie !" });
+        toast({ title: "Bon retour !", description: "Connexion réussie." });
       }
       setModalStep('FORM');
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur d'authentification", description: err.message });
+      toast({ variant: "destructive", title: "Erreur", description: "Veuillez vérifier vos identifiants." });
     }
   };
 
@@ -215,8 +187,8 @@ export default function VibeFestLanding() {
     setGeneratedTicket(uniqueTicketId);
     setModalStep('TICKET');
     toast({
-      title: formType === 'PASS' ? "Billet généré !" : "Candidature reçue !",
-      description: "Votre demande a été enregistrée avec succès.",
+      title: "C'est fait !",
+      description: "Votre réservation est confirmée.",
     });
   };
 
@@ -226,7 +198,7 @@ export default function VibeFestLanding() {
       {/* NAVIGATION */}
       <nav className="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-          <a href="#" className="flex flex-col leading-none select-none group">
+          <a href="#" className="flex flex-col leading-none group">
             <div className="text-xl md:text-2xl font-black tracking-tighter text-white uppercase">
               ONE<span className="text-primary">VIBE</span>
             </div>
@@ -241,14 +213,13 @@ export default function VibeFestLanding() {
             <a href="#univers" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">UNIVERS</a>
             <a href="#programme" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">PROGRAMME</a>
             <a href="#pass" className="hover:text-primary transition-colors text-muted-foreground text-[10px]">PASS</a>
-            {user ? (
+            {user && (
               <div className="flex items-center gap-4">
-                <span className="text-[9px] text-primary lowercase">{user.email}</span>
-                <button onClick={() => signOut(auth!)} className="text-[9px] text-muted-foreground hover:text-white">DÉCONNEXION</button>
+                <span className="text-[9px] text-primary">{user.email}</span>
+                <button onClick={() => signOut(auth!)} className="text-[9px] text-muted-foreground hover:text-white">QUITTER</button>
               </div>
-            ) : (
-              <a href="/admin" className="text-secondary hover:underline text-[10px]">ADMIN</a>
             )}
+            {!user && <a href="/admin" className="text-secondary text-[10px]">ADMIN</a>}
           </div>
 
           <Button size="sm" onClick={() => handleOpenForm('PASS', 'STANDARD')} className="font-bold rounded-full bg-primary hover:bg-primary/90 text-white text-[10px] px-6">
@@ -266,7 +237,7 @@ export default function VibeFestLanding() {
         
         <div className="max-w-7xl mx-auto px-4 w-full relative z-10 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6 text-[10px] font-semibold uppercase tracking-wider">
-            <span className="text-primary">26 Juin 2027</span>
+            <span className="text-primary">26 JUIN 2027</span>
             <span className="text-white/20">|</span>
             <span className="text-secondary">INEPSS</span>
             <span className="text-white/20">|</span>
@@ -279,15 +250,12 @@ export default function VibeFestLanding() {
           </h1>
 
           <p className="text-sm md:text-xl text-muted-foreground max-w-xl font-medium mb-8 mx-auto md:mx-0">
-            Rejoignez l'énergie créative. Inscrivez-vous maintenant pour réserver votre place à l'INEPSS.
+            L'inscription est désormais ouverte. Connectez-vous pour obtenir votre pass numérique et rejoindre la vibe.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} size="lg" className="h-14 px-8 text-xs font-bold rounded-full bg-primary text-white uppercase tracking-wider">
               S'INSCRIRE & RÉSERVER <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-14 px-8 text-xs font-bold rounded-full border-white/20 text-white bg-black/20 uppercase tracking-wider">
-              <a href="#programme">VOIR LE PROGRAMME</a>
             </Button>
           </div>
         </div>
@@ -300,7 +268,7 @@ export default function VibeFestLanding() {
             <h2 className="text-3xl md:text-5xl uppercase mb-2 font-black tracking-tight">
               4 UNIVERS. <span className="text-secondary">1 ÉNERGIE.</span>
             </h2>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">La diversité au cœur du festival</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Vivez l'expérience INEPSS</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -310,7 +278,6 @@ export default function VibeFestLanding() {
                   <Image src={uni.image} alt={uni.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 to-transparent" />
                   <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                    <div className="p-2 bg-black/60 rounded-lg backdrop-blur-md">{uni.icon}</div>
                     <h3 className="text-xl font-black text-white tracking-wide uppercase">{uni.title}</h3>
                   </div>
                 </div>
@@ -337,49 +304,25 @@ export default function VibeFestLanding() {
       {/* PASS */}
       <section id="pass" className="py-24 bg-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4">CHOISIR SON EXPÉRIENCE</h2>
-          <p className="text-sm mb-12 text-white/80">Inscrivez-vous d'abord pour accéder à la billetterie sécurisée.</p>
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4">LE PASS NUMÉRIQUE</h2>
+          <p className="text-sm mb-12 text-white/80">Inscription obligatoire pour sécuriser votre billet.</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Card className="bg-background text-foreground rounded-2xl p-8 border-none shadow-2xl">
               <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-2">PASS STANDARD</h3>
               <div className="text-4xl font-black mb-4">10.000 <span className="text-sm font-bold text-muted-foreground">FC</span></div>
-              <ul className="text-left text-xs space-y-3 mb-8 text-muted-foreground">
-                <li className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Accès complet aux 4 univers</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Concerts & Tournois</li>
-              </ul>
-              <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} className="w-full h-12 rounded-full font-bold bg-primary text-white text-xs uppercase tracking-widest">RÉSERVER MON PASS</Button>
+              <Button onClick={() => handleOpenForm('PASS', 'STANDARD')} className="w-full h-12 rounded-full font-bold bg-primary text-white text-xs uppercase tracking-widest">OBTENIR LE PASS</Button>
             </Card>
 
             <Card className="bg-black text-white rounded-2xl p-8 border border-white/10 relative shadow-2xl">
               <div className="absolute top-6 right-6 bg-secondary text-black text-[9px] font-black px-2 py-0.5 rounded-full">PREMIUM</div>
               <h3 className="text-xs font-black text-white/60 uppercase tracking-widest mb-2">PASS VIP</h3>
               <div className="text-4xl font-black mb-4 text-secondary">30.000 <span className="text-sm font-bold text-white/60">FC</span></div>
-              <ul className="text-left text-xs space-y-3 mb-8 text-white/60">
-                <li className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-secondary" /> Accès coupe-file INEPSS</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-secondary" /> Espace Front-stage exclusif</li>
-              </ul>
-              <Button onClick={() => handleOpenForm('PASS', 'VIP')} className="w-full h-12 rounded-full font-bold bg-white text-black text-xs uppercase tracking-widest">DEVENIR VIP</Button>
+              <Button onClick={() => handleOpenForm('PASS', 'VIP')} className="w-full h-12 rounded-full font-bold bg-white text-black text-xs uppercase tracking-widest">ACCÈS VIP</Button>
             </Card>
           </div>
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="bg-black py-12 border-t border-white/10 text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col items-center leading-none mb-8">
-            <div className="text-2xl font-black tracking-tighter text-primary uppercase">ONE VIBE</div>
-            <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase">FEST | 2027</div>
-          </div>
-          <div className="flex justify-center gap-8 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-8">
-            <a href="#univers" className="hover:text-white transition-colors">Univers</a>
-            <a href="#programme" className="hover:text-white transition-colors">Programme</a>
-            <a href="/admin" className="text-secondary">Admin Access</a>
-          </div>
-          <p className="text-[10px] text-white/20 uppercase tracking-[0.2em]">© 2027 ONE VIBE FEST. ALL RIGHTS RESERVED.</p>
-        </div>
-      </footer>
 
       {/* MODAL CHECKOUT / AUTH */}
       <AnimatePresence>
@@ -396,8 +339,8 @@ export default function VibeFestLanding() {
               {modalStep === 'AUTH' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <h3 className="text-2xl font-black uppercase mb-2">Inscription requise</h3>
-                    <p className="text-xs text-muted-foreground">Créez votre compte pour réserver votre pass ONE VIBE.</p>
+                    <h3 className="text-2xl font-black uppercase mb-2">{authMode === 'SIGNUP' ? 'INSCRIPTION' : 'CONNEXION'}</h3>
+                    <p className="text-xs text-muted-foreground">Rejoignez la vibe pour réserver votre pass.</p>
                   </div>
                   
                   <form onSubmit={handleAuth} className="space-y-4">
@@ -436,7 +379,7 @@ export default function VibeFestLanding() {
                       onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
                       className="text-[10px] text-muted-foreground hover:text-primary uppercase font-bold tracking-widest"
                     >
-                      {authMode === 'SIGNUP' ? "J'AI DÉJÀ UN COMPTE" : "CRÉER UN NOUVEAU COMPTE"}
+                      {authMode === 'SIGNUP' ? "DÉJÀ INSCRIT ? CONNECTEZ-VOUS" : "PAS DE COMPTE ? INSCRIVEZ-VOUS"}
                     </button>
                   </div>
                 </div>
@@ -445,8 +388,8 @@ export default function VibeFestLanding() {
               {modalStep === 'FORM' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <h3 className="text-2xl font-black uppercase mb-1">{formType === 'PASS' ? "Votre Pass" : "Exposant"}</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Finalisez vos informations</p>
+                    <h3 className="text-2xl font-black uppercase mb-1">FINALISATION</h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Validez vos coordonnées</p>
                   </div>
 
                   <form onSubmit={handleSubmitRegistration} className="space-y-4">
@@ -466,70 +409,47 @@ export default function VibeFestLanding() {
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                       />
-                      {formType === 'EXPOSITOR' && (
-                        <>
-                          <Input 
-                            placeholder="Nom de la marque" 
-                            required 
-                            className="bg-black border-white/10 h-12 text-sm rounded-xl"
-                            value={formData.company}
-                            onChange={e => setFormData({...formData, company: e.target.value})}
-                          />
-                          <Textarea 
-                            placeholder="Votre projet en quelques mots" 
-                            className="bg-black border-white/10 rounded-xl text-sm"
-                            value={formData.message}
-                            onChange={e => setFormData({...formData, message: e.target.value})}
-                          />
-                        </>
-                      )}
                       {formType === 'PASS' && (
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-[11px] text-muted-foreground">
-                          Catégorie : <span className="text-white font-bold">{formData.passCategory}</span>
-                          <br />
-                          Prix : <span className="text-primary font-bold">{formData.passCategory === 'VIP' ? '30.000' : '10.000'} FC</span>
+                        <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-[11px] text-muted-foreground text-center">
+                          TYPE DE PASS : <span className="text-primary font-bold">{formData.passCategory}</span>
                         </div>
                       )}
                     </div>
                     
                     <Button type="submit" className="w-full h-12 bg-secondary text-black font-black rounded-xl text-xs uppercase tracking-widest">
-                      CONFIRMER L'INSCRIPTION
+                      RÉSERVER MON BILLET
                     </Button>
                   </form>
                 </div>
               )}
 
               {modalStep === 'TICKET' && (
-                <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                <div className="text-center space-y-6">
                   <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary">
                     <ShieldCheck className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black uppercase text-white">INSCRIPTION RÉUSSIE</h3>
-                    <p className="text-xs text-muted-foreground mt-2">Votre pass pour l'INEPSS est prêt !</p>
+                    <h3 className="text-2xl font-black uppercase">VOTRE PASS EST PRÊT</h3>
+                    <p className="text-xs text-muted-foreground mt-2">Rendez-vous à l'INEPSS le 26 Juin.</p>
                   </div>
                   
-                  <div className="bg-white text-black p-6 rounded-2xl space-y-4 text-left shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary rotate-45 translate-x-8 -translate-y-8" />
+                  <div className="bg-white text-black p-6 rounded-2xl space-y-4 text-left shadow-2xl">
                     <div className="border-b border-neutral-200 pb-4">
-                      <div className="text-[10px] font-black text-primary uppercase mb-1">ONE VIBE FEST 2027</div>
+                      <div className="text-[10px] font-black text-primary uppercase">ONE VIBE FEST 2027</div>
                       <div className="text-xl font-black uppercase truncate">{formData.name}</div>
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase">{formType === 'PASS' ? `PASS ${formData.passCategory}` : 'EXPOSANT'}</div>
+                      <div className="text-[9px] font-bold text-muted-foreground uppercase">PASS {formData.passCategory}</div>
                     </div>
                     <div className="flex gap-4 items-center">
-                      <div className="p-2 border-2 border-black rounded-xl bg-neutral-50 shrink-0">
-                        <QrCode className="w-16 h-16 text-black" />
-                      </div>
+                      <QrCode className="w-16 h-16 text-black" />
                       <div className="text-[10px] space-y-1">
-                        <div className="font-mono font-bold text-neutral-800">{generatedTicket}</div>
-                        <div className="font-bold">INEPSS | 26 JUIN</div>
-                        <div className="text-neutral-500">Ouverture 12:00</div>
+                        <div className="font-mono font-bold">{generatedTicket}</div>
+                        <div className="font-bold">INEPSS | 12:00 - 22:00</div>
                       </div>
                     </div>
                   </div>
                   
                   <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-bold uppercase text-xs rounded-xl h-12 tracking-widest">
-                    FERMER
+                    TERMINER
                   </Button>
                 </div>
               )}

@@ -1,17 +1,19 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc } from 'firebase/firestore';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Image, Save, Plus, Trash, QrCode, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Key } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -19,9 +21,11 @@ export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('christianrwemera4@gmail.com');
+  const [password, setPassword] = useState('0994472599');
+  const [newPassword, setNewPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Firestore Refs
   const festivalSettingsRef = useMemoFirebase(() => {
@@ -50,7 +54,6 @@ export default function AdminDashboard() {
 
   const [heroInput, setHeroInput] = useState('');
   const [newProgram, setNewProgram] = useState({ time: '', title: '', desc: '', imageUrl: '' });
-  const [newTalent, setNewTalent] = useState({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,38 +63,70 @@ export default function AdminDashboard() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Accès autorisé", description: "Bienvenue dans le cockpit ONE VIBE." });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Accès refusé", description: "Identifiants invalides." });
+      let message = "Identifiants invalides.";
+      if (err.code === 'auth/invalid-credential') {
+        message = "Compte introuvable ou mot de passe incorrect. Vérifiez votre console Firebase.";
+      }
+      toast({ variant: "destructive", title: "Accès refusé", description: message });
     } finally {
       setIsLoggingIn(false);
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.currentUser || !newPassword) return;
+    setIsUpdatingPassword(true);
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      toast({ title: "Succès", description: "Votre mot de passe a été mis à jour." });
+      setNewPassword('');
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Veuillez vous reconnecter avant de changer le mot de passe." });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   const handleSaveSettings = () => {
     if (!festivalSettingsRef) return;
-    setDoc(festivalSettingsRef, {
+    const data = {
       heroImageUrl: heroInput || settings?.heroImageUrl || 'https://picsum.photos/seed/vibehero/1920/1080',
       updatedAt: new Date().toISOString()
-    }, { merge: true });
+    };
+    setDoc(festivalSettingsRef, data, { merge: true }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: festivalSettingsRef.path,
+        operation: OperationType.UPDATE,
+        requestResourceData: data
+      }, err));
+    });
     toast({ title: "Configuration enregistrée" });
   };
 
   const handleAddProgram = (e: React.FormEvent) => {
     e.preventDefault();
     if (!programCollectionRef) return;
-    addDoc(programCollectionRef, { ...newProgram, imageUrl: newProgram.imageUrl || 'https://picsum.photos/seed/prog'+Math.random()+'/600/400' });
+    const data = { ...newProgram, imageUrl: newProgram.imageUrl || 'https://picsum.photos/seed/prog' + Math.random() + '/600/400' };
+    addDoc(programCollectionRef, data).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: programCollectionRef.path,
+        operation: OperationType.CREATE,
+        requestResourceData: data
+      }, err));
+    });
     setNewProgram({ time: '', title: '', desc: '', imageUrl: '' });
-  };
-
-  const handleAddTalent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!talentsCollectionRef) return;
-    addDoc(talentsCollectionRef, { ...newTalent, imageUrl: newTalent.imageUrl || 'https://picsum.photos/seed/talent'+Math.random()+'/600/600' });
-    setNewTalent({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
   };
 
   const handleDeleteDoc = (collectionName: string, id: string) => {
     if (!firestore) return;
-    deleteDoc(doc(firestore, collectionName, id));
+    const docRef = doc(firestore, collectionName, id);
+    deleteDoc(docRef).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: OperationType.DELETE
+      }, err));
+    });
   };
 
   if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Chargement...</div>;
@@ -112,7 +147,7 @@ export default function AdminDashboard() {
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
                 required 
-                className="bg-black border-white/10 text-xs h-12"
+                className="bg-black border-white/10 text-xs h-12 rounded-xl"
               />
               <Input 
                 type="password" 
@@ -120,12 +155,15 @@ export default function AdminDashboard() {
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 required 
-                className="bg-black border-white/10 text-xs h-12"
+                className="bg-black border-white/10 text-xs h-12 rounded-xl"
               />
             </div>
-            <Button disabled={isLoggingIn} type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 uppercase text-[10px] tracking-widest">
-              {isLoggingIn ? "CONNEXION..." : "SE CONNECTER AU COCKPIT"}
+            <Button disabled={isLoggingIn} type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 uppercase text-[10px] tracking-widest rounded-xl">
+              {isLoggingIn ? "CONNEXION..." : "SE CONNECTER"}
             </Button>
+            <p className="text-[9px] text-center text-muted-foreground uppercase leading-relaxed mt-4">
+              Note : Assurez-vous d'avoir créé le compte christianrwemera4@gmail.com dans votre console Firebase Authentication.
+            </p>
           </form>
         </Card>
       </div>
@@ -139,7 +177,6 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
           <div className="flex items-center gap-4">
             <div className="text-xl font-black tracking-tighter text-white uppercase">ONE<span className="text-primary">VIBE</span> <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded ml-2">ADMIN</span></div>
-            <div className="hidden md:block text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Connecté : {user.email}</div>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" className="text-xs h-9 border-white/20"><a href="/">Voir le site</a></Button>
@@ -148,11 +185,12 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="hero" className="w-full">
-          <TabsList className="grid grid-cols-4 bg-white/5 border border-white/10 p-1 rounded-xl mb-6">
+          <TabsList className="grid grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-xl mb-6">
             <TabsTrigger value="hero" className="text-[10px] uppercase font-bold"><SettingsIcon className="w-3 h-3 mr-2" /> Hero</TabsTrigger>
             <TabsTrigger value="program" className="text-[10px] uppercase font-bold"><Calendar className="w-3 h-3 mr-2" /> Programme</TabsTrigger>
             <TabsTrigger value="talents" className="text-[10px] uppercase font-bold"><Users className="w-3 h-3 mr-2" /> Talents</TabsTrigger>
             <TabsTrigger value="tickets" className="text-[10px] uppercase font-bold"><FileText className="w-3 h-3 mr-2" /> Inscriptions</TabsTrigger>
+            <TabsTrigger value="security" className="text-[10px] uppercase font-bold"><Lock className="w-3 h-3 mr-2" /> Sécurité</TabsTrigger>
           </TabsList>
 
           <TabsContent value="hero">
@@ -165,7 +203,7 @@ export default function AdminDashboard() {
                   onChange={(e) => setHeroInput(e.target.value)}
                   className="bg-black border-white/10 text-xs"
                 />
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-bold text-xs uppercase"><Save className="w-4 h-4 mr-2" /> Mettre à jour</Button>
+                <Button onClick={handleSaveSettings} className="bg-primary text-white font-bold text-xs uppercase rounded-xl"><Save className="w-4 h-4 mr-2" /> Mettre à jour</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -176,10 +214,10 @@ export default function AdminDashboard() {
                 <CardHeader><CardTitle className="text-base">Nouvel Événement</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddProgram} className="space-y-3">
-                    <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs" />
-                    <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs" />
-                    <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs" />
-                    <Button type="submit" className="w-full bg-secondary text-black font-black text-xs uppercase"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
+                    <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs rounded-lg" />
+                    <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs rounded-lg" />
+                    <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs rounded-lg" />
+                    <Button type="submit" className="w-full bg-secondary text-black font-black text-xs uppercase rounded-xl"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
                   </form>
                 </CardContent>
               </Card>
@@ -211,12 +249,23 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="talents">
-            {/* Structure similaire pour les talents */}
+          <TabsContent value="security">
             <Card className="bg-white/5 border-white/10 text-white">
-              <CardHeader><CardTitle className="text-base">Gestion des Talents</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Changer le Mot de Passe</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground">Utilisez cette section pour piloter les acteurs de la vibe.</p>
+                <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
+                  <Input 
+                    type="password" 
+                    placeholder="Nouveau mot de passe" 
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                    className="bg-black border-white/10 text-xs rounded-xl"
+                  />
+                  <Button disabled={isUpdatingPassword} type="submit" className="bg-secondary text-black font-black text-xs uppercase rounded-xl">
+                    <Key className="w-4 h-4 mr-2" /> {isUpdatingPassword ? "Mise à jour..." : "Modifier"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
