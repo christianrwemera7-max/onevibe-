@@ -67,7 +67,7 @@ export default function ExplorePage() {
               <div className="inline-flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-[0.3em] mb-4">
                 <Sparkles className="w-4 h-4" /> IMMERSION TOTALE
               </div>
-              <h1 className="text-[25px] font-black uppercase italic mb-4 tracking-tighter">TEASER OFFICIEL DE {settings?.eventName || 'ONE VIBE FEST'}</h1>
+              <h1 className="text-[25px] font-black uppercase italic mb-4 tracking-tighter text-white">TEASER OFFICIEL DE {settings?.eventName || 'ONE VIBE FEST'}</h1>
               <div className="w-16 h-1 bg-primary/20 mx-auto mt-6 rounded-full" />
             </motion.div>
 
@@ -103,7 +103,7 @@ export default function ExplorePage() {
               >
                 <Button 
                   asChild
-                  className="w-full h-20 sm:h-16 bg-[#b5005b] hover:bg-[#9d004e] text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.01] shadow-[0_10px_40px_rgba(181,0,91,0.2)]"
+                  className="w-full h-20 sm:h-16 bg-[#b5005b] hover:bg-[#9d004e] text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.01] shadow-[0_10px_40px_rgba(181,0,91,0.2)] border-none"
                 >
                   <Link href={btn.href}>
                     <div className="flex items-center gap-4 sm:gap-6">

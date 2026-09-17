@@ -33,7 +33,6 @@ export function Footer() {
   const facebookUrl = settings?.facebookUrl || '#';
   const tiktokUrl = settings?.tiktokUrl || '#';
 
-  // Lien Google Maps par défaut vers Kinshasa / INEPSS
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
 
   return (
