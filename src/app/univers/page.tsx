@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Music, Palette, Briefcase, Gamepad2, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 
 const universes = [
@@ -56,7 +56,7 @@ export default function UniversPage() {
         <div className="space-y-40">
           {universes.map((uni, idx) => (
             <motion.div 
-              key={idx}
+              key={uni.title}
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               className={`flex flex-col ${idx % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-20 items-center`}
@@ -69,8 +69,8 @@ export default function UniversPage() {
                 <p className="text-lg text-muted-foreground leading-relaxed italic">{uni.description}</p>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  {uni.activities.map((act, i) => (
-                    <div key={i} className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  {uni.activities.map((act) => (
+                    <div key={act} className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
                       <ArrowRight className="w-4 h-4 text-primary shrink-0" />
                       <span className="text-[10px] font-black uppercase tracking-widest">{act}</span>
                     </div>
