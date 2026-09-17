@@ -45,12 +45,23 @@
     },
     "FestivalSettings": {
       "title": "Festival Settings",
-      "description": "Configurations modifiables de l'événement par les admins",
+      "description": "Configurations globales de l'événement",
       "type": "object",
       "properties": {
+        "eventName": { "type": "string", "description": "Nom officiel de l'événement" },
+        "eventTagline": { "type": "string", "description": "Slogan ou description courte" },
+        "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
+        "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
         "heroImageUrl": { "type": "string" },
-        "title": { "type": "string" },
-        "ticketingUrl": { "type": "string", "description": "Lien vers la billetterie externe" }
+        "ticketingUrl": { "type": "string" },
+        "teaserUrl": { "type": "string" },
+        "isCarouselEnabled": { "type": "boolean" },
+        "musicDesc": { "type": "string" },
+        "musicImg": { "type": "string" },
+        "creativeDesc": { "type": "string" },
+        "creativeImg": { "type": "string" },
+        "digitalDesc": { "type": "string" },
+        "digitalImg": { "type": "string" }
       }
     }
   },
@@ -72,7 +83,7 @@
     },
     "/settings/festival": {
       "schema": "FestivalSettings",
-      "description": "Paramètres généraux modifiables comme l'image Hero et le lien de billetterie"
+      "description": "Paramètres généraux modifiables de l'événement"
     }
   }
 }

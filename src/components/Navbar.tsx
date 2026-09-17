@@ -1,19 +1,28 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { LogOut, Lock } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { doc } from 'firebase/firestore';
 
 export function Navbar() {
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -31,9 +40,9 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex flex-col leading-none group">
           <div className="text-[20px] font-black tracking-tighter text-white uppercase group-hover:text-primary transition-all duration-300">
-            ONE<span className="text-primary group-hover:text-white">VIBE</span>
+            {settings?.eventName || 'ONE VIBE'}
           </div>
-          <div className="text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase mt-1">EST. 2027</div>
+          <div className="text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase mt-1">EST. {new Date().getFullYear()}</div>
         </Link>
         
         <div className="flex items-center gap-4">
