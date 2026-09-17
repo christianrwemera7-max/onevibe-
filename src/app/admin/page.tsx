@@ -79,6 +79,7 @@ export default function AdminDashboard() {
   const [heroInput2, setHeroInput2] = useState('');
   const [heroInput3, setHeroInput3] = useState('');
   const [globalBgUrl, setGlobalBgUrl] = useState('');
+  const [exposantsImg, setExposantsImg] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
   const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
@@ -108,6 +109,7 @@ export default function AdminDashboard() {
       setHeroInput2(settings.heroImageUrl2 || '');
       setHeroInput3(settings.heroImageUrl3 || '');
       setGlobalBgUrl(settings.globalBgUrl || '');
+      setExposantsImg(settings.exposantsImg || '');
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
       setIsCarouselEnabled(settings.isCarouselEnabled || false);
@@ -163,6 +165,7 @@ export default function AdminDashboard() {
       heroImageUrl2: heroInput2, 
       heroImageUrl3: heroInput3, 
       globalBgUrl,
+      exposantsImg,
       ticketingUrl: ticketingInput, 
       teaserUrl: teaserInput,
       isCarouselEnabled, musicDesc, musicImg, creativeDesc, creativeImg, digitalDesc, digitalImg,
@@ -180,7 +183,7 @@ export default function AdminDashboard() {
   const handleAddProgram = (e: React.FormEvent) => {
     e.preventDefault();
     if (!programCollectionRef) return;
-    const data = { ...newProgram, imageUrl: newProgram.imageUrl || "https://picsum.photos/seed/prog/600/400" };
+    const data = { ...newProgram, imageUrl: newProgram.imageUrl || "" };
     addDoc(programCollectionRef, data).catch(err => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: programCollectionRef.path, operation: OperationType.CREATE, requestResourceData: data
@@ -192,7 +195,7 @@ export default function AdminDashboard() {
   const handleAddTalent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!talentsCollectionRef) return;
-    const data = { ...newTalent, imageUrl: newTalent.imageUrl || "https://picsum.photos/seed/talent/600/600" };
+    const data = { ...newTalent, imageUrl: newTalent.imageUrl || "" };
     addDoc(talentsCollectionRef, data).catch(err => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: talentsCollectionRef.path, operation: OperationType.CREATE, requestResourceData: data
@@ -332,6 +335,20 @@ export default function AdminDashboard() {
                       <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setGlobalBgUrl, 'globalBg')} />
                       <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'globalBg'}>
                         {isUploading === 'globalBg' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image Stand */}
+                <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <label className="text-[9px] uppercase font-black text-secondary">IMAGE PAGE STAND (EXPOSANTS)</label>
+                  <div className="flex gap-2">
+                    <Input value={exposantsImg} onChange={e => setExposantsImg(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setExposantsImg, 'exposantsImg')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'exposantsImg'}>
+                        {isUploading === 'exposantsImg' ? <Loader2 className="w-4 h-4 animate-spin text-secondary" /> : <Upload className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>

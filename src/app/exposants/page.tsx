@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Store, Zap, QrCode, ShieldCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, addDoc, doc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,12 @@ export default function ExposantsPage() {
   const [modalStep, setModalStep] = useState<'FORM' | 'TICKET'>('FORM');
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
 
   const registrationsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -43,7 +49,6 @@ export default function ExposantsPage() {
       createdAt: new Date().toISOString()
     };
 
-    // Non-blocking mutation
     addDoc(registrationsRef, submissionData)
       .then(() => {
         setGeneratedTicket(uniqueTicketId);
@@ -59,8 +64,10 @@ export default function ExposantsPage() {
       });
   };
 
+  const exposantsImg = settings?.exposantsImg;
+
   return (
-    <div className="pt-32 pb-20 bg-neutral-950 min-h-screen">
+    <div className="pt-32 pb-20 bg-transparent min-h-screen relative z-10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
@@ -72,7 +79,7 @@ export default function ExposantsPage() {
               <span className="text-secondary">AU SOMMET</span>
             </h1>
             <p className="text-[13px] text-muted-foreground leading-relaxed italic opacity-80 max-w-lg">
-              Devenez exposant à ONE VIBE FEST et connectez-vous avec des milliers de passionnés de culture, d'innovation et de style. Profitez d'un emplacement stratégique au cœur de l'événement.
+              Devenez exposant à {settings?.eventName || 'ONE VIBE FEST'} et connectez-vous avec des milliers de passionnés de culture, d'innovation et de style. Profitez d'un emplacement stratégique au cœur de l'événement.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -98,13 +105,18 @@ export default function ExposantsPage() {
           </motion.div>
 
           <div className="relative aspect-[4/5] max-w-[550px] rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl group mx-auto lg:mx-0 bg-white/5">
-            <Image 
-              src="https://picsum.photos/seed/market1/800/1000" 
-              alt="Exposant" 
-              fill 
-              className="object-cover transition-all duration-700 group-hover:scale-105 opacity-80" 
-              data-ai-hint="exhibition stand festival" 
-            />
+            {exposantsImg ? (
+              <Image 
+                src={exposantsImg} 
+                alt="Exposant" 
+                fill 
+                className="object-cover transition-all duration-700 group-hover:scale-105" 
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+                <Store className="w-12 h-12 text-white/10" />
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-8 left-8 right-8 p-8 bg-black/60 backdrop-blur-2xl rounded-[2rem] border border-white/10">
               <div className="flex items-center gap-4 mb-3">

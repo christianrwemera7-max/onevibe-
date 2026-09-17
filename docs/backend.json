@@ -56,6 +56,7 @@
         "heroImageUrl2": { "type": "string" },
         "heroImageUrl3": { "type": "string" },
         "globalBgUrl": { "type": "string", "description": "Image d'arrière-plan pour tout le site" },
+        "exposantsImg": { "type": "string", "description": "Image de présentation pour la page Stand" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
         "isCarouselEnabled": { "type": "boolean" },
