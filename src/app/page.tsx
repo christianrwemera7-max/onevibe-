@@ -65,16 +65,24 @@ export default function LandingPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const images = useMemo(() => {
     const list: string[] = [];
+    
+    // On priorise Cloudinary ou les URLs directes connues
     if (isValidUrl(settings?.heroImageUrl)) {
       list.push(settings.heroImageUrl);
-    } else {
-      list.push("https://picsum.photos/seed/vibehero/1920/1080");
     }
+    
+    // Si le carousel est activé, on ajoute les images des talents
     if (settings?.isCarouselEnabled && talents && talents.length > 0) {
       talents.forEach(t => {
         if (isValidUrl(t.imageUrl)) list.push(t.imageUrl);
       });
     }
+
+    // Fallback si la liste est vide ou si les images sont suspectes (ex: pin.it qui n'est pas un lien direct)
+    if (list.length === 0) {
+      list.push("https://picsum.photos/seed/vibehero/1920/1080");
+    }
+    
     return list;
   }, [settings, talents]);
 
@@ -185,12 +193,32 @@ export default function LandingPage() {
     );
   }
 
+  // Sécurité pour l'URL de l'image : si c'est un lien Pinterest court, next/image peut échouer même si l'hôte est autorisé
+  // car ce n'est pas un lien direct vers un fichier image.
+  const currentImage = images[currentIndex];
+  const isDirectImage = currentImage && !currentImage.includes('pin.it');
+
   return (
     <div className="relative bg-black h-screen overflow-hidden">
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
-          <motion.div key={images[currentIndex]} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
-            <Image src={images[currentIndex]} alt="Hero" fill className="object-cover opacity-80 brightness-90" priority />
+          <motion.div key={currentImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
+            {isDirectImage ? (
+              <Image 
+                src={currentImage} 
+                alt="Hero" 
+                fill 
+                className="object-cover opacity-80 brightness-90" 
+                priority 
+                unoptimized={currentImage.includes('pin.it')} // Évite le traitement Next.js pour les liens Pinterest
+              />
+            ) : (
+              <img 
+                src={currentImage} 
+                alt="Hero" 
+                className="w-full h-full object-cover opacity-80 brightness-90"
+              />
+            )}
           </motion.div>
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
