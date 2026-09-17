@@ -1,7 +1,8 @@
+
 "use client";
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight,
   Sparkles,
@@ -18,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
+import { useUser, useAuth, useDoc, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -39,10 +40,51 @@ export default function LandingPage() {
     return doc(firestore, 'settings', 'festival');
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
+
+  const talentsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'talents');
+  }, [firestore]);
+  const { data: talents } = useCollection(talentsRef);
   
   const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
 
   const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+
+  // Carousel logic
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const images = useMemo(() => {
+    const list: string[] = [];
+    
+    // Add main hero image first
+    if (isValidUrl(settings?.heroImageUrl)) {
+      list.push(settings.heroImageUrl);
+    } else {
+      list.push("https://picsum.photos/seed/vibehero/1920/1080");
+    }
+
+    // Add talents images if carousel is enabled
+    if (settings?.isCarouselEnabled && talents && talents.length > 0) {
+      talents.forEach(t => {
+        if (isValidUrl(t.imageUrl)) list.push(t.imageUrl);
+      });
+    }
+
+    return list;
+  }, [settings, talents]);
+
+  useEffect(() => {
+    if (!settings?.isCarouselEnabled || images.length <= 1) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, 6000); // Change image every 6 seconds
+
+    return () => clearInterval(interval);
+  }, [settings?.isCarouselEnabled, images]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,15 +100,14 @@ export default function LandingPage() {
           email: authData.email,
           phone: authData.phone,
           type: 'PASS',
-          passCategory: 'STANDARD',
           createdAt: new Date().toISOString(),
           ticketCode: `OVF-MEMBER-${Math.floor(1000 + Math.random() * 9000)}`
         });
 
-        toast({ title: "Bienvenue !", description: "Accès festival activé et profil enregistré." });
+        toast({ title: "Bienvenue !", description: "Compte créé avec succès." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Content de vous revoir !", description: "Synchronisation établie." });
+        toast({ title: "Content de vous revoir !", description: "Connexion réussie." });
       }
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erreur", description: err.message || "Identifiants incorrects." });
@@ -167,15 +208,26 @@ export default function LandingPage() {
   return (
     <div className="relative bg-black h-screen overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <Image 
-          src={isValidUrl(settings?.heroImageUrl) ? settings!.heroImageUrl : "https://picsum.photos/seed/vibe1/1920/1080"} 
-          alt="Hero" 
-          fill 
-          className="object-cover opacity-60 brightness-75 scale-105" 
-          priority 
-          data-ai-hint="stadium concert lights" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={images[currentIndex]}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <Image 
+              src={images[currentIndex]} 
+              alt="Hero Background" 
+              fill 
+              className="object-cover opacity-80 brightness-90 transition-all duration-1000" 
+              priority 
+              quality={100}
+            />
+          </motion.div>
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
       </div>
       
       <div className="max-w-7xl mx-auto px-4 w-full h-full relative z-10 flex items-center justify-center text-center">

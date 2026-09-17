@@ -10,13 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle, Info, Upload, Loader2, Download } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Info } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { uploadToCloudinary } from '@/app/actions/cloudinary-upload';
 
 export default function AdminDashboard() {
@@ -65,6 +64,7 @@ export default function AdminDashboard() {
   const [heroInput, setHeroInput] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
+  const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
   
   const [musicDesc, setMusicDesc] = useState('');
   const [musicImg, setMusicImg] = useState('');
@@ -81,6 +81,7 @@ export default function AdminDashboard() {
       setHeroInput(settings.heroImageUrl || '');
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
+      setIsCarouselEnabled(settings.isCarouselEnabled || false);
       
       setMusicDesc(settings.musicDesc || "Le cœur battant du festival. Des concerts explosifs, des DJ sets hypnotiques.");
       setMusicImg(settings.musicImg || "https://picsum.photos/seed/music1/800/1000");
@@ -131,6 +132,7 @@ export default function AdminDashboard() {
       heroImageUrl: heroInput,
       ticketingUrl: ticketingInput,
       teaserUrl: teaserInput,
+      isCarouselEnabled: isCarouselEnabled,
       musicDesc,
       musicImg,
       creativeDesc,
@@ -140,7 +142,7 @@ export default function AdminDashboard() {
       updatedAt: new Date().toISOString()
     };
     setDoc(settingsRef, data, { merge: true }).then(() => {
-      toast({ title: "Configuration et Univers enregistrés avec succès" });
+      toast({ title: "Configuration enregistrée" });
     }).catch(err => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: settingsRef.path,
@@ -229,7 +231,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
         <Card className="max-w-md w-full bg-black border-white/10 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
           <div className="text-center mb-10">
-            <Shield className="w-6 h-6 text-primary mx-auto mb-4" />
+            <Lock className="w-6 h-6 text-primary mx-auto mb-4" />
             <div className="text-[18px] font-black uppercase tracking-tighter">COCKPIT <span className="text-primary">ADMIN</span></div>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -253,19 +255,19 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="tickets" className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
-            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Inscriptions & Pass</TabsTrigger>
-            <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Les 3 Univers</TabsTrigger>
-            <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Talents</TabsTrigger>
+            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><FileText className="w-3 h-3 mr-2" /> Inscriptions</TabsTrigger>
+            <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Univers</TabsTrigger>
+            <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Guests</TabsTrigger>
             <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Agenda</TabsTrigger>
-            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Design / Medias</TabsTrigger>
+            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Medias</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tickets">
             <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] overflow-hidden">
               <CardHeader className="border-b border-white/5 bg-white/[0.02] flex flex-row items-center justify-between">
-                <CardTitle className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Base de Données Contacts</CardTitle>
-                <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] font-black uppercase tracking-widest h-9 rounded-xl hover:bg-white/10 transition-all">
-                  <Download className="w-3 h-3 mr-2" /> Exporter Tous les Contacts (CSV)
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Base de Données</CardTitle>
+                <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] font-black uppercase tracking-widest h-9 rounded-xl hover:bg-white/10">
+                  <Download className="w-3 h-3 mr-2" /> Exporter (CSV)
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
@@ -273,7 +275,7 @@ export default function AdminDashboard() {
                   <TableHeader className="bg-black/20">
                     <TableRow className="border-white/10">
                       <TableHead className="text-white text-[9px] uppercase font-black px-6">Participant</TableHead>
-                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Type / Info</TableHead>
+                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Type</TableHead>
                       <TableHead className="text-white text-[9px] uppercase font-black px-6 text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -282,14 +284,13 @@ export default function AdminDashboard() {
                       <TableRow key={reg.id} className="border-white/5 hover:bg-white/[0.03]">
                         <TableCell className="px-6 py-4">
                           <div className="font-black text-[11px] uppercase italic">{reg.name}</div>
-                          <div className="text-[9px] text-muted-foreground lowercase font-mono">{reg.email}</div>
+                          <div className="text-[9px] text-muted-foreground font-mono">{reg.email}</div>
                           <div className="text-[9px] text-primary font-black italic">{reg.phone}</div>
                         </TableCell>
                         <TableCell className="px-6">
-                          <span className={`text-[8px] border px-2 py-0.5 rounded-full font-black uppercase italic mr-2 ${reg.type === 'EXPOSITOR' ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                          <span className={`text-[8px] border px-2 py-0.5 rounded-full font-black uppercase italic ${reg.type === 'EXPOSITOR' ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
                             {reg.type}
                           </span>
-                          <span className="font-mono text-[9px] text-white/50">{reg.ticketCode}</span>
                         </TableCell>
                         <TableCell className="px-6 text-right">
                           <Button size="icon" variant="ghost" className="text-destructive/50 hover:text-destructive h-8 w-8" onClick={() => handleDeleteDoc('registrations', reg.id)}><Trash className="w-3.5 h-3.5" /></Button>
@@ -302,80 +303,81 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="universes">
-            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] p-6 space-y-6">
-              <h3 className="text-[12px] font-black uppercase tracking-widest italic border-b border-white/5 pb-2">Contenu des 3 Univers Thématiques</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                  <div className="text-xs font-black text-primary uppercase">1. VIBE MUSIC</div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Description</label>
-                    <textarea value={musicDesc} onChange={e => setMusicDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
+          <TabsContent value="hero">
+            <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-[11px] font-black uppercase tracking-widest italic border-b border-white/5 pb-2">Configuration de l'Accueil</h3>
+                
+                <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/10">
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-white">DÉFILEMENT AUTO DES IMAGES</div>
+                    <p className="text-[8px] text-muted-foreground uppercase">Alterner entre l'image Hero et les Guests</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
-                    <div className="flex gap-2">
-                      <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
-                      <div className="relative">
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setMusicImg, 'music')} />
-                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'music'}>
-                          {isUploading === 'music' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        </Button>
-                      </div>
+                  <Switch 
+                    checked={isCarouselEnabled} 
+                    onCheckedChange={setIsCarouselEnabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">IMAGE DE FOND HERO (FIXE OU DÉBUT DIAPORAMA)</label>
+                  <div className="flex gap-2">
+                    <Input value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setHeroInput, 'hero')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero'}>
+                        {isUploading === 'hero' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                  <div className="text-xs font-black text-accent uppercase">2. VIBE CREATIVE</div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Description</label>
-                    <textarea value={creativeDesc} onChange={e => setCreativeDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
-                    <div className="flex gap-2">
-                      <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
-                      <div className="relative">
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setCreativeImg, 'creative')} />
-                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'creative'}>
-                          {isUploading === 'creative' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN BILLETTERIE</label>
+                  <Input value={ticketingInput} onChange={(e) => setTicketingInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
                 </div>
 
-                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                  <div className="text-xs font-black text-secondary uppercase">3. VIBE DIGITAL</div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Description</label>
-                    <textarea value={digitalDesc} onChange={e => setDigitalDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">Image</label>
-                    <div className="flex gap-2">
-                      <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
-                      <div className="relative">
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setDigitalImg, 'digital')} />
-                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'digital'}>
-                          {isUploading === 'digital' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">LIEN TEASER YOUTUBE</label>
+                  <Input value={teaserInput} onChange={(e) => setTeaserInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
                 </div>
               </div>
+              
+              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest w-full"><Save className="w-4 h-4 mr-2" /> ENREGISTRER LA CONFIGURATION</Button>
+            </Card>
+          </TabsContent>
 
-              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-12 px-6 rounded-xl tracking-widest"><Save className="w-4 h-4 mr-2" /> Enregistrer les Univers</Button>
+          <TabsContent value="universes">
+            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { id: 'music', label: 'VIBE MUSIC', color: 'text-primary', setter: setMusicImg, val: musicImg, descSetter: setMusicDesc, descVal: musicDesc },
+                  { id: 'creative', label: 'VIBE CREATIVE', color: 'text-accent', setter: setCreativeImg, val: creativeImg, descSetter: setCreativeDesc, descVal: creativeDesc },
+                  { id: 'digital', label: 'VIBE DIGITAL', color: 'text-secondary', setter: setDigitalImg, val: digitalImg, descSetter: setDigitalDesc, descVal: digitalDesc }
+                ].map((uni) => (
+                  <div key={uni.id} className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                    <div className={`text-xs font-black ${uni.color} uppercase`}>{uni.label}</div>
+                    <textarea value={uni.descVal} onChange={e => uni.descSetter(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" placeholder="Description..." />
+                    <div className="flex gap-2">
+                      <Input value={uni.val} onChange={e => uni.setter(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="Image URL..." />
+                      <div className="relative">
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, uni.setter, uni.id)} />
+                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === uni.id}>
+                          {isUploading === uni.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-12 px-6 rounded-xl tracking-widest"><Save className="w-4 h-4 mr-2" /> SAUVEGARDER LES UNIVERS</Button>
             </Card>
           </TabsContent>
 
           <TabsContent value="talents">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6">
-                <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Ajouter un Talent</h3>
+                <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Ajouter un Guest</h3>
                 <form onSubmit={handleAddTalent} className="space-y-4">
                   <Input required value={newTalent.name} onChange={e => setNewTalent({...newTalent, name: e.target.value})} placeholder="Nom" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input required value={newTalent.role} onChange={e => setNewTalent({...newTalent, role: e.target.value})} placeholder="Spécialité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
@@ -401,7 +403,6 @@ export default function AdminDashboard() {
                   <TableHeader className="bg-black/20">
                     <TableRow className="border-white/10">
                       <TableHead className="text-white text-[9px] uppercase font-black px-6">Talent</TableHead>
-                      <TableHead className="text-white text-[9px] uppercase font-black px-6">Catégorie</TableHead>
                       <TableHead className="text-white text-[9px] uppercase font-black px-6 text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -412,7 +413,6 @@ export default function AdminDashboard() {
                           <div className="text-[11px] font-black uppercase italic">{talent.name}</div>
                           <div className="text-[9px] text-muted-foreground">{talent.role}</div>
                         </TableCell>
-                        <TableCell className="px-6 text-[9px] font-black text-primary">{talent.category}</TableCell>
                         <TableCell className="px-6 text-right">
                           <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('talents', talent.id)}><Trash className="w-3.5 h-3.5" /></Button>
                         </TableCell>
@@ -429,11 +429,11 @@ export default function AdminDashboard() {
               <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6">
                 <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Ajouter une Activité</h3>
                 <form onSubmit={handleAddProgram} className="space-y-4">
-                  <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <div className="flex gap-2">
-                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
+                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="Image URL" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
                     <div className="relative">
                       <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, (url) => setNewProgram({...newProgram, imageUrl: url}), 'program')} />
                       <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'program'}>
@@ -467,35 +467,6 @@ export default function AdminDashboard() {
                 </Table>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="hero">
-            <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl">
-              <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 italic">Médias & Liens Externes</h3>
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO</label>
-                  <div className="flex gap-2">
-                    <Input value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setHeroInput, 'hero')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero'}>
-                        {isUploading === 'hero' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">BILLETTERIE (OMT EVENTS)</label>
-                  <Input value={ticketingInput} onChange={(e) => setTicketingInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
-                </div>
-                <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN TEASER YOUTUBE</label>
-                  <Input value={teaserInput} onChange={(e) => setTeaserInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
-                </div>
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest"><Save className="w-4 h-4 mr-2" /> Mettre à jour</Button>
-              </div>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
