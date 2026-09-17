@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Music, 
@@ -16,9 +16,10 @@ import {
   Lock,
   Mail,
   LogOut,
-  User as UserIcon,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Store,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,8 +40,8 @@ const getImg = (id: string) => imageList.find(img => img.id === id)?.imageUrl ||
 const universes = [
   {
     title: "VIBE MUSIC",
-    icon: <Music className="w-4 h-4 text-pink-400" />,
-    description: "Vibrations et connexions sonores majeures.",
+    icon: <Music className="w-5 h-5 text-pink-500" />,
+    description: "Vibrations et connexions sonores majeures avec les têtes d'affiches du moment.",
     activities: [
       { name: "Concerts & Showcases", desc: "Invités majeurs + talents de demain." },
       { name: "DJ Battle", desc: "Duels rythmés arbitrés par le public." }
@@ -49,8 +50,8 @@ const universes = [
   },
   {
     title: "VIBE CREATIVE",
-    icon: <Palette className="w-4 h-4 text-purple-400" />,
-    description: "Création artistique pure, visuelle et stylistique.",
+    icon: <Palette className="w-5 h-5 text-purple-500" />,
+    description: "Le carrefour de la création artistique pure, visuelle et stylistique.",
     activities: [
       { name: "Fashion Show", desc: "Présentations de jeunes créateurs." },
       { name: "Live Painting", desc: "Fresques monumentales en direct." }
@@ -59,8 +60,8 @@ const universes = [
   },
   {
     title: "VIBE BUSINESS",
-    icon: <Briefcase className="w-4 h-4 text-blue-400" />,
-    description: "Impulsion entrepreneuriale et concrétisation.",
+    icon: <Briefcase className="w-5 h-5 text-blue-500" />,
+    description: "Impulsion entrepreneuriale et concrétisation des projets innovants.",
     activities: [
       { name: "Startup & Brand Village", desc: "Marques et initiatives d'avenir." },
       { name: "ONE VIBE Connect", desc: "Rencontres B2B stratégiques." }
@@ -69,8 +70,8 @@ const universes = [
   },
   {
     title: "VIBE DIGITAL",
-    icon: <Gamepad2 className="w-4 h-4 text-teal-400" />,
-    description: "Culture numérique, gaming et nouveaux médias.",
+    icon: <Gamepad2 className="w-5 h-5 text-teal-500" />,
+    description: "Culture numérique, gaming, e-sport et nouveaux médias interactifs.",
     activities: [
       { name: "Gaming / E-sport", desc: "Tournois intenses avec cashprize." },
       { name: "Digital Experience", desc: "Immersion interactive & démos." }
@@ -81,10 +82,10 @@ const universes = [
 
 const defaultProgram = [
   { time: "12:00", title: "Ouverture des Portes", desc: "Immersion et ouverture des villages thématiques." },
-  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale e-sport." },
-  { time: "16:00", title: "Creative Showcase", desc: "Défilé et performances artistiques." },
-  { time: "19:00", title: "Main Stage Concert", desc: "Têtes d'affiches nationales." },
-  { time: "22:00", title: "Clôture", desc: "Fin de l'événement." }
+  { time: "14:00", title: "VIBE DIGITAL Tournament", desc: "Grande finale e-sport sur scène centrale." },
+  { time: "16:00", title: "Creative Showcase", desc: "Défilé et performances artistiques en live." },
+  { time: "19:00", title: "Main Stage Concert", desc: "Têtes d'affiches nationales et internationales." },
+  { time: "22:00", title: "Clôture", desc: "Fin de l'événement et after-party." }
 ];
 
 export default function VibeFestLanding() {
@@ -99,8 +100,7 @@ export default function VibeFestLanding() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<'FORM' | 'TICKET'>('FORM');
-  const [formType, setFormType] = useState<'PASS' | 'EXPOSITOR'>('PASS');
-  const [formData, setFormData] = useState({ name: '', phone: '', passCategory: 'STANDARD' });
+  const [formData, setFormData] = useState({ name: '', phone: '' });
   const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
 
   const settingsDocRef = useMemoFirebase(() => {
@@ -130,27 +130,19 @@ export default function VibeFestLanding() {
     try {
       if (authMode === 'SIGNUP') {
         await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Bienvenue !", description: "Votre compte a été créé." });
+        toast({ title: "Bienvenue !", description: "Votre compte a été créé avec succès." });
       } else {
         await signInWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Content de vous revoir !", description: "Connexion réussie." });
+        toast({ title: "Content de vous revoir !", description: "Connexion établie." });
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: "Identifiants incorrects ou compte inexistant." });
+      toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides ou problème réseau." });
     } finally {
       setIsAuthPending(false);
     }
   };
 
-  const handleOpenForm = (type: 'PASS' | 'EXPOSITOR', category: string = 'STANDARD') => {
-    // Si c'est pour un pass, on redirige directement vers omtevents.com
-    if (type === 'PASS') {
-      window.open('https://omtevents.com', '_blank');
-      return;
-    }
-    // Sinon on ouvre le formulaire interne (pour les exposants par exemple)
-    setFormType(type);
-    setFormData(prev => ({ ...prev, passCategory: category }));
+  const handleOpenExpositorForm = () => {
     setModalStep('FORM');
     setIsModalOpen(true);
   };
@@ -159,14 +151,13 @@ export default function VibeFestLanding() {
     e.preventDefault();
     if (!registrationsRef || !user) return;
 
-    const uniqueTicketId = `OVF-2027-${Math.floor(100000 + Math.random() * 900000)}`;
+    const uniqueTicketId = `OVF-STAND-${Math.floor(100000 + Math.random() * 900000)}`;
     const submissionData = {
       userId: user.uid,
       name: formData.name,
       email: user.email,
       phone: formData.phone,
-      type: formType,
-      passCategory: formType === 'PASS' ? formData.passCategory : null,
+      type: 'EXPOSITOR',
       ticketCode: uniqueTicketId,
       createdAt: new Date().toISOString()
     };
@@ -194,7 +185,6 @@ export default function VibeFestLanding() {
     );
   }
 
-  // GATEKEEPER : Si non connecté, écran de connexion obligatoire
   if (!user) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -207,10 +197,10 @@ export default function VibeFestLanding() {
             <div className="text-3xl font-black tracking-tighter text-white uppercase inline-flex items-center gap-2">
               ONE<span className="text-primary">VIBE</span> <Sparkles className="text-primary w-5 h-5" />
             </div>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-2">Connectez-vous pour entrer dans le festival</p>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-2">Identifiez-vous pour accéder au festival</p>
           </div>
 
-          <Card className="bg-white/5 border-white/10 text-white p-8 rounded-3xl backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 text-white p-8 rounded-3xl backdrop-blur-xl border-t-primary/20">
             <form onSubmit={handleAuth} className="space-y-4">
               <div className="space-y-3">
                 <div className="relative">
@@ -237,12 +227,12 @@ export default function VibeFestLanding() {
                 </div>
               </div>
 
-              <Button disabled={isAuthPending} type="submit" className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl text-xs uppercase tracking-widest">
-                {isAuthPending ? "TRAITEMENT..." : (authMode === 'SIGNUP' ? "CRÉER MON COMPTE" : "ENTRER DANS LA VIBE")}
+              <Button disabled={isAuthPending} type="submit" className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-primary/20">
+                {isAuthPending ? "TRAITEMENT..." : (authMode === 'SIGNUP' ? "CRÉER MON COMPTE" : "ACCÉDER À LA VIBE")}
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center border-t border-white/5 pt-6">
               <button 
                 onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
                 className="text-[10px] text-muted-foreground hover:text-white uppercase font-bold tracking-widest transition-colors"
@@ -270,8 +260,9 @@ export default function VibeFestLanding() {
           </a>
           
           <div className="hidden lg:flex items-center gap-8 font-bold text-[10px] uppercase tracking-widest">
-            <a href="#univers" className="hover:text-primary transition-colors text-muted-foreground">UNIVERS</a>
+            <a href="#univers" className="hover:text-primary transition-colors text-muted-foreground">ACTIVITÉS</a>
             <a href="#programme" className="hover:text-primary transition-colors text-muted-foreground">PROGRAMME</a>
+            <a href="#exposants" className="hover:text-primary transition-colors text-muted-foreground">EXPOSANTS</a>
             
             {user.email === 'christianrwemera4@gmail.com' && (
               <a href="/admin" className="text-secondary hover:text-secondary/80 flex items-center gap-2 border border-secondary/20 px-3 py-1 rounded-full bg-secondary/5 transition-all">
@@ -281,7 +272,7 @@ export default function VibeFestLanding() {
 
             <div className="flex items-center gap-4 pl-4 border-l border-white/10">
               <div className="flex flex-col items-end">
-                <span className="text-[8px] text-muted-foreground uppercase">SESSION ACTIVE</span>
+                <span className="text-[8px] text-muted-foreground uppercase">ADMIN CONNECTÉ</span>
                 <span className="text-primary text-[9px] lowercase font-mono">{user.email}</span>
               </div>
               <button onClick={() => signOut(auth!)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-white transition-colors">
@@ -295,204 +286,304 @@ export default function VibeFestLanding() {
             asChild
             className="font-bold rounded-full bg-primary hover:bg-primary/90 text-white text-[10px] px-6 lg:hidden"
           >
-            <a href="https://omtevents.com" target="_blank" rel="noopener noreferrer">BILLETTERIE</a>
+            <a href="https://omtevents.com" target="_blank" rel="noopener noreferrer">BILLETS</a>
           </Button>
         </div>
       </nav>
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-black">
+      <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
-          <Image src={heroImage} alt="Festival background" fill className="object-cover opacity-50" priority data-ai-hint="festival crowd" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/60" />
+          <Image src={heroImage} alt="Festival background" fill className="object-cover opacity-60" priority data-ai-hint="festival atmosphere" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/70" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 w-full relative z-10 text-center md:text-left">
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6 text-[10px] font-semibold uppercase tracking-wider"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md mb-8 text-[11px] font-bold uppercase tracking-wider text-primary shadow-xl"
           >
-            <span className="text-primary">26 JUIN 2027</span>
-            <span className="text-white/20">|</span>
-            <span className="text-white">INEPSS • KINSHASA</span>
+            <Zap className="w-3.5 h-3.5" /> 26 JUIN 2027 • INEPSS • KINSHASA
           </motion.div>
 
-          <h1 className="text-6xl md:text-9xl font-black leading-[0.85] tracking-tighter mb-6 uppercase italic">
+          <h1 className="text-6xl md:text-[10rem] font-black leading-[0.8] tracking-tighter mb-8 uppercase italic">
             ONE VIBE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary">GENERATION</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary animate-pulse">GENERATION</span>
           </h1>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+          <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start">
             <Button 
               asChild
               size="lg" 
-              className="h-16 px-10 text-[10px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,0,128,0.3)] hover:scale-105 transition-transform"
+              className="h-20 px-12 text-[11px] font-black rounded-full bg-primary text-white uppercase tracking-[0.25em] shadow-[0_0_40px_rgba(255,0,128,0.4)] hover:scale-105 transition-all"
             >
               <a href="https://omtevents.com" target="_blank" rel="noopener noreferrer">
-                RÉSERVER MON PASS <ExternalLink className="ml-2 w-4 h-4" />
+                ACHETER MON BILLET <ExternalLink className="ml-2 w-5 h-5" />
               </a>
             </Button>
             <Button 
-              onClick={() => handleOpenForm('EXPOSITOR')}
+              onClick={handleOpenExpositorForm}
               variant="outline"
               size="lg" 
-              className="h-16 px-10 text-[10px] font-black rounded-full border-white/10 hover:bg-white/5 text-white uppercase tracking-[0.2em] transition-transform"
+              className="h-20 px-12 text-[11px] font-black rounded-full border-white/20 hover:bg-white/5 text-white uppercase tracking-[0.25em] transition-all"
             >
-              DEVENIR EXPOSANT
+              RÉSERVER UN STAND
             </Button>
           </div>
         </div>
       </section>
 
-      {/* UNIVERS */}
-      <section id="univers" className="py-32 bg-black border-y border-white/5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic mb-4">LES 4 UNIVERS</h2>
-            <div className="w-20 h-1 bg-primary mx-auto" />
+      {/* UNIVERS / ACTIVITÉS */}
+      <section id="univers" className="py-32 bg-black border-y border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -mr-48 -mt-48" />
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-24">
+            <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic mb-6">EXPLOREZ LES UNIVERS</h2>
+            <p className="text-xs text-muted-foreground uppercase tracking-[0.5em] font-bold">Découvrez le cœur du festival</p>
+            <div className="w-24 h-1.5 bg-primary mx-auto mt-6 rounded-full" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             {universes.map((uni, idx) => (
-              <div key={idx} className="group cursor-pointer">
-                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden mb-6">
-                  <Image src={uni.image} alt={uni.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-px bg-primary" />
-                      <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Explore</span>
-                    </div>
-                    <h3 className="text-2xl font-black text-white tracking-tighter uppercase">{uni.title}</h3>
+              <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="group relative"
+              >
+                <div className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden mb-8 shadow-2xl border border-white/5">
+                  <Image src={uni.image} alt={uni.title} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
+                  <div className="absolute top-8 left-8 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 text-white">
+                    {uni.icon}
+                  </div>
+                  <div className="absolute bottom-8 left-8 right-8">
+                    <h3 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">{uni.title}</h3>
+                    <div className="w-10 h-1 bg-primary rounded-full" />
                   </div>
                 </div>
-                <p className="text-muted-foreground text-xs leading-relaxed px-2 italic">{uni.description}</p>
-              </div>
+                <div className="px-2 space-y-4">
+                  <p className="text-muted-foreground text-xs leading-relaxed italic">{uni.description}</p>
+                  <ul className="space-y-2">
+                    {uni.activities.map((act, aIdx) => (
+                      <li key={aIdx} className="flex items-start gap-2">
+                        <ArrowRight className="w-3 h-3 text-primary mt-1 shrink-0" />
+                        <span className="text-[10px] font-bold uppercase text-white/80">{act.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* EXPOSANTS SECTION */}
+      <section id="exposants" className="py-32 bg-neutral-900 border-b border-white/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              className="space-y-8"
+            >
+              <div className="inline-block p-3 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                <Store className="w-8 h-8 text-secondary" />
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-[0.9]">
+                EXPOSEZ <br />
+                <span className="text-secondary">VOTRE VIBE</span>
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed italic">
+                Vous êtes une marque, un créateur ou une startup ? Profitez d'une visibilité exceptionnelle auprès de milliers de festivaliers passionnés.
+              </p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-3xl font-black text-white mb-1">5000+</div>
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Visiteurs attendus</div>
+                </div>
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-3xl font-black text-white mb-1">50+</div>
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Stands disponibles</div>
+                </div>
+              </div>
+              <Button 
+                onClick={handleOpenExpositorForm}
+                size="lg" 
+                className="h-16 px-10 text-[11px] font-black rounded-full bg-secondary text-black uppercase tracking-[0.2em] hover:scale-105 transition-all"
+              >
+                RÉSERVER MON STAND MAINTENANT
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              className="relative aspect-square lg:aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              <Image src={getImg('market-fashion')} alt="Exhibitor stand" fill className="object-cover" data-ai-hint="fashion pop-up" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <div className="absolute bottom-10 left-10 right-10 p-8 bg-black/40 backdrop-blur-xl rounded-[2rem] border border-white/10">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-secondary" />
+                  </div>
+                  <div className="text-xl font-black text-white uppercase italic">Impact Maximum</div>
+                </div>
+                <p className="text-xs text-white/70 leading-relaxed italic">Nos espaces sont conçus pour favoriser les interactions et maximiser votre conversion commerciale.</p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* PROGRAMME */}
       <section id="programme" className="py-32 bg-neutral-950">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black tracking-tighter uppercase italic">LE FLOW DU JOUR</h2>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-2">Programmation Officielle</p>
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-black tracking-tighter uppercase italic text-center">LE FLOW DU JOUR</h2>
+            <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-[0.3em] mt-3">Programmation Officielle • 26.06.27</p>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             {activeProgram.map((item, idx) => (
-              <div key={idx} className="group p-6 bg-white/5 border border-white/5 rounded-3xl hover:border-primary/30 transition-all flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                  <div className="text-2xl font-black text-primary italic font-mono">{item.time}</div>
+              <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group p-8 bg-white/5 border border-white/5 rounded-[2rem] hover:border-primary/40 hover:bg-white/[0.08] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+              >
+                <div className="flex items-center gap-10 w-full md:w-auto">
+                  <div className="text-4xl font-black text-primary italic font-mono min-w-[120px]">{item.time}</div>
+                  <div className="h-10 w-px bg-white/10 hidden md:block" />
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-tight">{item.title}</h4>
-                    <p className="text-[10px] text-muted-foreground mt-1">{item.desc}</p>
+                    <h4 className="text-lg font-black uppercase tracking-tight text-white group-hover:text-primary transition-colors">{item.title}</h4>
+                    <p className="text-xs text-muted-foreground mt-2 italic max-w-md">{item.desc}</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors" />
-              </div>
+                <div className="self-end md:self-center">
+                  <ChevronRight className="w-6 h-6 text-white/20 group-hover:text-primary transition-colors translate-x-0 group-hover:translate-x-2 duration-300" />
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="py-16 border-t border-white/5 bg-black text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-2xl font-black tracking-tighter text-white uppercase mb-8">
-            ONE<span className="text-primary">VIBE</span> FEST
+      <footer className="py-24 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="text-3xl font-black tracking-tighter text-white uppercase mb-10 flex items-center justify-center gap-3">
+            ONE<span className="text-primary">VIBE</span> <Sparkles className="w-6 h-6 text-primary" />
           </div>
-          <div className="flex justify-center gap-8 mb-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <a href="#" className="hover:text-primary">CONTACT</a>
-            <a href="#" className="hover:text-primary">PRESSE</a>
-            <a href="#" className="hover:text-primary">PARTENAIRES</a>
+          <div className="flex flex-wrap justify-center gap-10 mb-12 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            <a href="#" className="hover:text-white transition-colors">CONTACT</a>
+            <a href="#" className="hover:text-white transition-colors">DEVENIR PARTENAIRE</a>
+            <a href="#" className="hover:text-white transition-colors">PRESSE</a>
+            <a href="#" className="hover:text-white transition-colors">FAQ</a>
+            {user.email === 'christianrwemera4@gmail.com' && (
+              <a href="/admin" className="text-primary hover:scale-105 transition-transform">ESPACE ADMIN</a>
+            )}
           </div>
-          <div className="text-[9px] text-muted-foreground uppercase font-black tracking-[0.3em] opacity-40">
+          <div className="h-px w-24 bg-white/10 mx-auto mb-12" />
+          <div className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.4em] opacity-40">
             ONE VIBE FEST • 2027 • KINSHASA • TOUS DROITS RÉSERVÉS
           </div>
         </div>
       </footer>
 
-      {/* MODAL EXPOSANTS (uniquement interne) */}
+      {/* MODAL EXPOSANTS */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl">
             <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: 20 }} 
-              className="bg-neutral-900 border border-white/10 rounded-[2rem] p-10 max-w-md w-full relative text-white"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+              className="bg-neutral-900 border border-white/10 rounded-[2.5rem] p-12 max-w-lg w-full relative text-white shadow-[0_0_100px_rgba(0,0,0,0.5)]"
             >
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-2 text-muted-foreground hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-10 right-10 p-2 text-muted-foreground hover:text-white transition-colors rounded-full hover:bg-white/5"><X className="w-8 h-8" /></button>
               
               {modalStep === 'FORM' && (
-                <div className="space-y-8">
+                <div className="space-y-10">
                   <div className="text-center">
-                    <h3 className="text-3xl font-black uppercase tracking-tighter italic">INSCRIPTION</h3>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-2 font-bold">Espace Exposants & Créateurs</p>
+                    <div className="w-16 h-16 bg-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-secondary/20">
+                      <Store className="w-8 h-8 text-secondary" />
+                    </div>
+                    <h3 className="text-4xl font-black uppercase tracking-tighter italic">RÉSERVATION STAND</h3>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-widest mt-3 font-bold">Rejoignez l'aventure ONE VIBE FEST 2027</p>
                   </div>
 
-                  <form onSubmit={handleSubmitRegistration} className="space-y-4">
-                    <div className="space-y-3">
-                      <Input 
-                        placeholder="Nom de votre marque / projet" 
-                        required 
-                        className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl"
-                        value={formData.name}
-                        onChange={e => setFormData({...formData, name: e.target.value})}
-                      />
-                      <Input 
-                        placeholder="Téléphone de contact" 
-                        required 
-                        type="tel"
-                        className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl"
-                        value={formData.phone}
-                        onChange={e => setFormData({...formData, phone: e.target.value})}
-                      />
-                      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 text-[10px] text-center uppercase font-black">
-                        DOMAINE : <span className="text-primary">EXPOSANT VIBE</span>
+                  <form onSubmit={handleSubmitRegistration} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mb-2 block ml-1">NOM DE LA MARQUE / PROJET</label>
+                        <Input 
+                          placeholder="Votre marque" 
+                          required 
+                          className="bg-black/50 border-white/10 h-16 text-sm rounded-2xl focus:ring-secondary focus:border-secondary"
+                          value={formData.name}
+                          onChange={e => setFormData({...formData, name: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mb-2 block ml-1">TÉLÉPHONE DE CONTACT</label>
+                        <Input 
+                          placeholder="+243 ..." 
+                          required 
+                          type="tel"
+                          className="bg-black/50 border-white/10 h-16 text-sm rounded-2xl focus:ring-secondary focus:border-secondary"
+                          value={formData.phone}
+                          onChange={e => setFormData({...formData, phone: e.target.value})}
+                        />
+                      </div>
+                      <div className="p-5 bg-secondary/5 rounded-2xl border border-secondary/20 flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">TYPE D'ESPACE</span>
+                        <span className="text-secondary text-[11px] font-black uppercase italic tracking-widest">EXPOSANT VIBE</span>
                       </div>
                     </div>
                     
-                    <Button type="submit" className="w-full h-14 bg-secondary text-black font-black rounded-2xl text-[10px] uppercase tracking-widest">
-                      ENVOYER MA DEMANDE
+                    <Button type="submit" className="w-full h-16 bg-secondary text-black font-black rounded-2xl text-[11px] uppercase tracking-widest shadow-xl shadow-secondary/10 hover:scale-[1.02] active:scale-95 transition-all">
+                      SOUMETTRE MON DOSSIER
                     </Button>
                   </form>
                 </div>
               )}
 
               {modalStep === 'TICKET' && (generatedTicket && (
-                <div className="text-center space-y-8 py-4">
-                  <div className="w-20 h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary animate-pulse">
-                    <ShieldCheck className="w-10 h-10" />
+                <div className="text-center space-y-10 py-6">
+                  <div className="w-24 h-24 bg-secondary/10 rounded-[2rem] flex items-center justify-center mx-auto text-secondary animate-pulse border border-secondary/20 shadow-[0_0_30px_rgba(0,255,255,0.2)]">
+                    <ShieldCheck className="w-12 h-12" />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-black uppercase italic">DOSSIER REÇU</h3>
-                    <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold">Votre demande est en cours de traitement</p>
+                    <h3 className="text-4xl font-black uppercase italic">DOSSIER REÇU</h3>
+                    <p className="text-[11px] text-muted-foreground mt-3 uppercase font-bold tracking-widest leading-relaxed">Merci pour votre intérêt ! Notre équipe étudiera votre demande avec le plus grand soin.</p>
                   </div>
                   
-                  <div className="bg-white text-black p-8 rounded-[2rem] space-y-6 text-left shadow-2xl relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-                    <div className="border-b-2 border-dashed border-neutral-200 pb-6 relative z-10">
-                      <div className="text-[10px] font-black text-primary uppercase mb-1">ONE VIBE FEST</div>
-                      <div className="text-2xl font-black uppercase tracking-tighter">{formData.name}</div>
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1">DOSSIER EXPOSANT • 2027</div>
+                  <div className="bg-white text-black p-10 rounded-[3rem] space-y-8 text-left shadow-2xl relative overflow-hidden group">
+                    <div className="absolute -top-16 -right-16 w-48 h-48 bg-secondary/10 rounded-full blur-[80px] group-hover:scale-110 transition-transform" />
+                    <div className="border-b-2 border-dashed border-neutral-200 pb-8 relative z-10">
+                      <div className="text-[11px] font-black text-secondary uppercase mb-2 tracking-widest">ONE VIBE FEST STAND</div>
+                      <div className="text-3xl font-black uppercase tracking-tighter">{formData.name}</div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase mt-2 tracking-widest">VIBE MARKET • 2027 • KINSHASA</div>
                     </div>
-                    <div className="flex gap-6 items-center relative z-10">
-                      <div className="p-2 bg-neutral-100 rounded-xl">
-                        <QrCode className="w-16 h-16 text-black" />
+                    <div className="flex flex-col sm:flex-row gap-8 items-center relative z-10">
+                      <div className="p-4 bg-neutral-50 rounded-[2rem] border border-neutral-100">
+                        <QrCode className="w-20 h-20 text-black" />
                       </div>
-                      <div className="text-[9px] space-y-1 font-bold">
-                        <div className="font-mono text-primary">{generatedTicket}</div>
-                        <div className="uppercase">VALIDATION EN COURS</div>
-                        <div className="text-muted-foreground">UNE RÉPONSE SOUS 48H</div>
+                      <div className="text-[10px] space-y-2 font-bold w-full">
+                        <div className="font-mono text-secondary text-base bg-secondary/5 p-2 rounded-xl text-center border border-secondary/10">{generatedTicket}</div>
+                        <div className="uppercase tracking-widest text-center pt-2">STATUS : EN ATTENTE</div>
+                        <div className="text-muted-foreground text-[9px] uppercase tracking-widest text-center">RÉPONSE PRÉVUE SOUS 48H</div>
                       </div>
                     </div>
                   </div>
                   
-                  <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-black uppercase text-[10px] rounded-2xl h-14 tracking-[0.2em]">
+                  <Button onClick={() => setIsModalOpen(false)} className="w-full bg-primary text-white font-black uppercase text-[11px] rounded-2xl h-16 tracking-[0.25em] shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
                     RETOUR AU FESTIVAL
                   </Button>
                 </div>
