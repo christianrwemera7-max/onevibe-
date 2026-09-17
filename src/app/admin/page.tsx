@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -11,12 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle, Info, Copy } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, FileText, Lock, LogOut, Shield, ExternalLink, Youtube, Star, LayoutGrid, AlertTriangle, Info, Upload, Loader2 } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { uploadToCloudinary } from '@/app/actions/cloudinary-upload';
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -24,6 +25,8 @@ export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
+
+  const [isUploading, setIsUploading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isUserLoading && user && user.email !== 'christianrwemera4@gmail.com') {
@@ -99,6 +102,26 @@ export default function AdminDashboard() {
       toast({ variant: "destructive", title: "Accès refusé", description: "Identifiants administrateur invalides." });
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void, fieldKey: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(fieldKey);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', fieldKey);
+
+    try {
+      const result = await uploadToCloudinary(formData);
+      setter(result.url);
+      toast({ title: "Image téléversée", description: "Le lien Cloudinary a été généré automatiquement." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur d'upload", description: error.message });
+    } finally {
+      setIsUploading(null);
     }
   };
 
@@ -195,37 +218,13 @@ export default function AdminDashboard() {
           <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Quitter</Button>
         </div>
 
-        <Collapsible className="mb-8">
-          <CollapsibleTrigger className="w-full">
-            <Alert className="bg-primary/10 border-primary/20 text-primary cursor-pointer hover:bg-primary/20 transition-all rounded-2xl text-left">
-              <Info className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest italic flex items-center justify-between">
-                Besoin d'aide pour vos images ? 
-                <span className="text-[8px] bg-primary text-white px-2 py-0.5 rounded-full">CLIQUEZ ICI</span>
-              </AlertTitle>
-              <AlertDescription className="text-[10px] uppercase font-bold tracking-wider italic">
-                Apprenez comment obtenir des liens valides depuis Firebase Storage.
-              </AlertDescription>
-            </Alert>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
-            <div className="text-[11px] font-black uppercase tracking-widest text-primary italic border-b border-white/5 pb-2">GUIDE : OBTENIR UN LIEN FIREBASE STORAGE</div>
-            <ol className="list-decimal list-inside space-y-3 text-[10px] text-white/70 font-bold uppercase italic leading-relaxed">
-              <li>Allez dans l'onglet <span className="text-white">Build > Storage</span> de votre console Firebase.</li>
-              <li>Téléversez votre image (bouton <span className="text-white">Upload file</span>).</li>
-              <li>Une fois téléversée, <span className="text-white">cliquez sur le nom du fichier</span> dans la liste.</li>
-              <li>Dans le volet de droite, cherchez la section <span className="text-white">Emplacement du fichier</span>.</li>
-              <li>Cliquez sur <span className="text-white">Jeton d'accès au téléchargement</span> (Download URL) pour copier le lien.</li>
-              <li>Collez ce lien dans les champs ci-dessous.</li>
-            </ol>
-            <Alert className="bg-amber-900/20 border-amber-900/30 text-amber-200 rounded-2xl">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <AlertDescription className="text-[9px] uppercase font-black">
-                IMPORTANT : Les liens locaux (file:///C:/...) ne fonctionnent pas. Utilisez uniquement des liens HTTPS.
-              </AlertDescription>
-            </Alert>
-          </CollapsibleContent>
-        </Collapsible>
+        <Alert className="bg-primary/10 border-primary/20 text-primary rounded-2xl">
+          <Upload className="h-4 w-4 text-primary" />
+          <AlertTitle className="text-xs font-black uppercase tracking-widest italic">NOUVEAU : TÉLÉVERSER VOS IMAGES</AlertTitle>
+          <AlertDescription className="text-[10px] uppercase font-bold tracking-wider italic">
+            Vous pouvez maintenant choisir un fichier directement depuis votre ordinateur. Il sera stocké sur Cloudinary et le lien sera généré automatiquement.
+          </AlertDescription>
+        </Alert>
 
         <Tabs defaultValue="tickets" className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
@@ -286,8 +285,16 @@ export default function AdminDashboard() {
                     <textarea value={musicDesc} onChange={e => setMusicDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (Firebase URL)</label>
-                    <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <div className="flex gap-2">
+                      <Input value={musicImg} onChange={e => setMusicImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <div className="relative">
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setMusicImg, 'music')} />
+                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'music'}>
+                          {isUploading === 'music' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -298,8 +305,16 @@ export default function AdminDashboard() {
                     <textarea value={creativeDesc} onChange={e => setCreativeDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (Firebase URL)</label>
-                    <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <div className="flex gap-2">
+                      <Input value={creativeImg} onChange={e => setCreativeImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <div className="relative">
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setCreativeImg, 'creative')} />
+                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'creative'}>
+                          {isUploading === 'creative' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -310,8 +325,16 @@ export default function AdminDashboard() {
                     <textarea value={digitalDesc} onChange={e => setDigitalDesc(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-xs h-20 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] uppercase text-muted-foreground block">URL de l'image (Firebase URL)</label>
-                    <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-xs h-10 rounded-xl" />
+                    <label className="text-[9px] uppercase text-muted-foreground block">Image de l'univers</label>
+                    <div className="flex gap-2">
+                      <Input value={digitalImg} onChange={e => setDigitalImg(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" placeholder="URL ou téléverser..." />
+                      <div className="relative">
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setDigitalImg, 'digital')} />
+                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === 'digital'}>
+                          {isUploading === 'digital' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -332,7 +355,15 @@ export default function AdminDashboard() {
                     <option value="CREATIVE">CRÉATIF</option>
                     <option value="DIGITAL">DIGITAL</option>
                   </select>
-                  <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="URL Image (Firebase URL)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <div className="flex gap-2">
+                    <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
+                    <div className="relative">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, (url) => setNewTalent({...newTalent, imageUrl: url}), 'talents')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'talents'}>
+                        {isUploading === 'talents' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
                   <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter</Button>
                 </form>
               </Card>
@@ -367,12 +398,20 @@ export default function AdminDashboard() {
           <TabsContent value="program">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-6">
-                <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Ajouter une Activité Globale</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Ajouter une Activité</h3>
                 <form onSubmit={handleAddProgram} className="space-y-4">
                   <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
                   <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Description textuelle" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="URL Image (Firebase URL)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <div className="flex gap-2">
+                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-xs h-12 rounded-xl flex-1" />
+                    <div className="relative">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, (url) => setNewProgram({...newProgram, imageUrl: url}), 'program')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'program'}>
+                        {isUploading === 'program' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
                   <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl tracking-widest"><Plus className="w-4 h-4 mr-2" /> Ajouter à l'agenda</Button>
                 </form>
               </Card>
@@ -406,8 +445,16 @@ export default function AdminDashboard() {
               <h3 className="text-[12px] font-black uppercase tracking-widest mb-6 italic">Configuration Globale & Médias</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO (Firebase URL)</label>
-                  <Input placeholder="https://firebasestorage.googleapis.com/..." value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl" />
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">IMAGE DE FOND HERO</label>
+                  <div className="flex gap-2">
+                    <Input placeholder="URL ou téléverser..." value={heroInput} onChange={(e) => setHeroInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, setHeroInput, 'hero')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero'}>
+                        {isUploading === 'hero' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block mb-2">LIEN BILLETTERIE EXTERNE (OMT EVENTS)</label>
@@ -423,7 +470,7 @@ export default function AdminDashboard() {
                     <Input placeholder="Lien complet de la vidéo YouTube" value={teaserInput} onChange={(e) => setTeaserInput(e.target.value)} className="bg-black border-white/10 text-xs h-14 pl-12 rounded-2xl" />
                   </div>
                 </div>
-                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest shadow-xl"><Save className="w-4 h-4 mr-2" /> Mettre à jour les médias</Button>
+                <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl tracking-widest shadow-xl shadow-primary/20"><Save className="w-4 h-4 mr-2" /> Mettre à jour les médias</Button>
               </div>
             </Card>
           </TabsContent>
