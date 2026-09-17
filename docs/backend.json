@@ -55,6 +55,7 @@
         "heroImageUrl": { "type": "string" },
         "heroImageUrl2": { "type": "string" },
         "heroImageUrl3": { "type": "string" },
+        "globalBgUrl": { "type": "string", "description": "Image d'arrière-plan pour tout le site" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
         "isCarouselEnabled": { "type": "boolean" },

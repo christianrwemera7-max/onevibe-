@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -77,6 +78,7 @@ export default function AdminDashboard() {
   const [heroInput, setHeroInput] = useState('');
   const [heroInput2, setHeroInput2] = useState('');
   const [heroInput3, setHeroInput3] = useState('');
+  const [globalBgUrl, setGlobalBgUrl] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
   const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
@@ -105,6 +107,7 @@ export default function AdminDashboard() {
       setHeroInput(settings.heroImageUrl || '');
       setHeroInput2(settings.heroImageUrl2 || '');
       setHeroInput3(settings.heroImageUrl3 || '');
+      setGlobalBgUrl(settings.globalBgUrl || '');
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
       setIsCarouselEnabled(settings.isCarouselEnabled || false);
@@ -159,6 +162,7 @@ export default function AdminDashboard() {
       heroImageUrl: heroInput, 
       heroImageUrl2: heroInput2, 
       heroImageUrl3: heroInput3, 
+      globalBgUrl,
       ticketingUrl: ticketingInput, 
       teaserUrl: teaserInput,
       isCarouselEnabled, musicDesc, musicImg, creativeDesc, creativeImg, digitalDesc, digitalImg,
@@ -317,11 +321,25 @@ export default function AdminDashboard() {
           <TabsContent value="hero">
             <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
               <div className="space-y-6">
-                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Images du Carousel (Page d'accueil)</h3>
+                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Images Globales et Carousel</h3>
                 
+                {/* Image Background Globale */}
+                <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <label className="text-[9px] uppercase font-black text-primary">IMAGE D'ARRIÈRE-PLAN GLOBALE (TOUTES PAGES)</label>
+                  <div className="flex gap-2">
+                    <Input value={globalBgUrl} onChange={e => setGlobalBgUrl(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setGlobalBgUrl, 'globalBg')} />
+                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'globalBg'}>
+                        {isUploading === 'globalBg' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Image 1 */}
                 <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 1 (PRINCIPALE)</label>
+                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 1 (ACCUEIL)</label>
                   <div className="flex gap-2">
                     <Input value={heroInput} onChange={e => setHeroInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
                     <div className="relative">
