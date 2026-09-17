@@ -42,7 +42,9 @@ export function Navbar() {
           <div className="text-[20px] font-black tracking-tighter text-white uppercase group-hover:text-primary transition-all duration-300">
             {settings?.eventName || 'ONE VIBE'}
           </div>
-          <div className="text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase mt-1">EST. {new Date().getFullYear()}</div>
+          <div className="text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase mt-1">
+            EST. {settings?.establishedYear || '2026'}
+          </div>
         </Link>
         
         <div className="flex items-center gap-4">

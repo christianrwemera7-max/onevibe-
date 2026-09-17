@@ -52,6 +52,7 @@
         "eventTagline": { "type": "string", "description": "Slogan ou description courte" },
         "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
         "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
+        "establishedYear": { "type": "string", "description": "Année de création affichée sous le logo (ex: 2026)" },
         "heroImageUrl": { "type": "string" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },

@@ -66,6 +66,7 @@ export default function AdminDashboard() {
   const [eventTagline, setEventTagline] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [eventLocation, setEventLocation] = useState('');
+  const [establishedYear, setEstablishedYear] = useState('');
 
   // Media Settings
   const [heroInput, setHeroInput] = useState('');
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
       setEventTagline(settings.eventTagline || 'UNE ÉNERGIE MULTIDIMENSIONNELLE');
       setEventDate(settings.eventDate || '2027-06-26T12:00:00');
       setEventLocation(settings.eventLocation || 'INEPSS • KINSHASA');
+      setEstablishedYear(settings.establishedYear || '2026');
 
       setHeroInput(settings.heroImageUrl || '');
       setTicketingInput(settings.ticketingUrl || '');
@@ -146,6 +148,7 @@ export default function AdminDashboard() {
       eventTagline,
       eventDate,
       eventLocation,
+      establishedYear,
       heroImageUrl: heroInput,
       ticketingUrl: ticketingInput,
       teaserUrl: teaserInput,
@@ -276,6 +279,10 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">NOM DE L'ÉVÉNEMENT (LOGO)</label>
                   <Input value={eventName} onChange={(e) => setEventName(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" placeholder="Ex: ONE VIBE" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">ANNÉE DE CRÉATION (EST.)</label>
+                  <Input value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" placeholder="Ex: 2026" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground block">SLOGAN / TAGLINE</label>
