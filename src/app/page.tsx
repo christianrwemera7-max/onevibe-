@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -13,7 +12,8 @@ import {
   User as UserIcon,
   Phone,
   Star,
-  User
+  User,
+  ShoppingBag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -168,7 +168,7 @@ export default function LandingPage() {
         </div>
         
         <div className="max-w-5xl mx-auto px-6 w-full relative z-10 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-10">
             <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white italic">
               <Zap className="w-3.5 h-3.5 text-primary" /> {eventLocation}
             </div>
@@ -177,8 +177,10 @@ export default function LandingPage() {
               <span className="text-primary">{eventTagline}</span>
             </h1>
             <div className="pt-2"><Countdown targetDate={settings?.eventDate} /></div>
-            <div className="flex flex-col sm:flex-row gap-5 justify-center mt-10 items-center">
-              <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-xl shadow-primary/30"><a href={ticketingUrl} target="_blank">BILLETTERIE <ExternalLink className="ml-2 w-3.5 h-3.5" /></a></Button>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 items-center">
+              <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-xl shadow-primary/30 w-full sm:w-auto"><a href={ticketingUrl} target="_blank">BILLETTERIE <ExternalLink className="ml-2 w-3.5 h-3.5" /></a></Button>
+              <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white border-2 border-primary/20 hover:bg-primary/90 uppercase tracking-[0.2em] shadow-xl shadow-primary/20 w-full sm:w-auto"><a href="/explore">MERCH & T-SHIRTS <ShoppingBag className="ml-2 w-3.5 h-3.5" /></a></Button>
               <Link href="/explore" className="group flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.3em] text-white hover:text-primary italic transition-all">EXPLORER <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" /></Link>
             </div>
           </motion.div>

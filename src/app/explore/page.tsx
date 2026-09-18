@@ -1,9 +1,8 @@
-
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, Sparkles, LayoutGrid, Star, Calendar, Store } from 'lucide-react';
+import { ChevronRight, Sparkles, LayoutGrid, Star, Calendar, Store, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -44,6 +43,12 @@ export default function ExplorePage() {
       href: "/programme", 
       icon: <Calendar className="w-4 h-4" />,
       desc: "Le flow du jour J" 
+    },
+    { 
+      title: "ONE VIBE MERCH", 
+      href: "#", 
+      icon: <ShoppingBag className="w-4 h-4" />,
+      desc: "T-shirts & Merch officiels" 
     },
     { 
       title: "RESERVER VOTRE STAND", 
