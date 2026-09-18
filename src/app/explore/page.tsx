@@ -28,63 +28,63 @@ export default function ExplorePage() {
 
   const navButtons = [
     { 
-      title: "DÉCOUVRIR LES UNIVERS DU FESTIVAL", 
+      title: "DÉCOUVRIR LES UNIVERS", 
       href: "/univers", 
-      icon: <LayoutGrid className="w-5 h-5" />,
+      icon: <LayoutGrid className="w-4 h-4" />,
       desc: "3 dimensions à explorer" 
     },
     { 
-      title: "DÉCOUVRIR LES GUESTS PRÉVUS", 
+      title: "DÉCOUVRIR LES GUESTS", 
       href: "/guests", 
-      icon: <Star className="w-5 h-5" />,
+      icon: <Star className="w-4 h-4" />,
       desc: "L'élite de la scène actuelle" 
     },
     { 
-      title: "DÉCOUVRIR LE PROGRAMME (LE FLOW DU JOUR J)", 
+      title: "VOIR LE PROGRAMME", 
       href: "/programme", 
-      icon: <Calendar className="w-5 h-5" />,
-      desc: "Timing millimétré" 
+      icon: <Calendar className="w-4 h-4" />,
+      desc: "Le flow du jour J" 
     },
     { 
-      title: "RESERVER VOTRE STAND AUPRÈS DES ORGANISATEURS", 
+      title: "RESERVER VOTRE STAND", 
       href: "/exposants", 
-      icon: <Store className="w-5 h-5" />,
+      icon: <Store className="w-4 h-4" />,
       desc: "Boostez votre business" 
     }
   ];
 
   return (
-    <div className="pt-32 pb-20 bg-black min-h-screen">
+    <div className="pt-28 pb-16 bg-black min-h-screen">
       {/* Teaser Section */}
       {teaserUrl && getYoutubeId(teaserUrl) && (
-        <section className="mb-24 relative">
-          <div className="max-w-5xl mx-auto px-4">
+        <section className="mb-16 md:mb-20 relative">
+          <div className="max-w-5xl mx-auto px-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-12"
+              className="text-center mb-8 md:mb-12"
             >
-              <div className="inline-flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-[0.3em] mb-6">
-                <Sparkles className="w-4 h-4" /> IMMERSION TOTALE
+              <div className="inline-flex items-center gap-2 text-primary font-black text-[8px] md:text-[9px] uppercase tracking-[0.3em] mb-5">
+                <Sparkles className="w-3.5 h-3.5" /> IMMERSION TOTALE
               </div>
               
-              <h1 className="flex flex-col items-center leading-[0.85] mb-8">
-                <span className="text-[40px] md:text-[70px] font-black uppercase italic tracking-tighter text-white">
+              <h1 className="flex flex-col items-center leading-none mb-6">
+                <span className="text-[28px] md:text-[45px] font-black uppercase italic tracking-tighter text-white">
                   TEASER <span className="text-primary">OFFICIEL</span>
                 </span>
-                <span className="text-[14px] md:text-[20px] font-black uppercase tracking-[0.5em] text-white/30 mt-2 italic">
+                <span className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] text-white/20 mt-1 italic">
                   {settings?.eventName || 'ONE VIBE FEST'}
                 </span>
               </h1>
               
-              <div className="w-16 h-1 bg-primary/40 mx-auto rounded-full" />
+              <div className="w-12 h-1 bg-primary/30 mx-auto rounded-full" />
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="relative aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-white/5"
+              className="relative aspect-video rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-white/5"
             >
               <iframe 
                 className="absolute inset-0 w-full h-full"
@@ -100,35 +100,35 @@ export default function ExplorePage() {
       )}
 
       {/* Navigation Buttons Section */}
-      <section className="py-12 bg-transparent relative">
-        <div className="max-w-4xl mx-auto px-4 space-y-6">
-          <div className="grid grid-cols-1 gap-5">
+      <section className="py-8 bg-transparent relative">
+        <div className="max-w-3xl mx-auto px-6 space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             {navButtons.map((btn, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * i + 0.4 }}
+                transition={{ delay: 0.1 * i + 0.3 }}
               >
                 <Button 
                   asChild
-                  className="w-full h-20 sm:h-16 bg-[#b5005b] hover:bg-[#9d004e] text-white rounded-[1.5rem] sm:rounded-full flex items-center justify-between px-8 sm:px-12 group transition-all hover:scale-[1.01] shadow-[0_10px_40px_rgba(181,0,91,0.2)] border-none"
+                  className="w-full h-16 md:h-18 bg-[#b5005b] hover:bg-[#9d004e] text-white rounded-2xl md:rounded-full flex items-center justify-between px-6 md:px-10 group transition-all hover:scale-[1.01] shadow-lg border-none"
                 >
                   <Link href={btn.href}>
-                    <div className="flex items-center gap-4 sm:gap-6">
-                      <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                        {React.cloneElement(btn.icon as React.ReactElement, { className: 'w-4 h-4' })}
+                    <div className="flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        {btn.icon}
                       </div>
                       <div className="text-left">
-                        <div className="text-[11px] sm:text-[12px] font-black uppercase italic tracking-tight leading-tight">
+                        <div className="text-[11px] md:text-[13px] font-black uppercase italic tracking-tight leading-tight">
                           {btn.title}
                         </div>
-                        <div className="text-[7px] sm:text-[8px] font-bold opacity-70 uppercase tracking-widest mt-0.5">
+                        <div className="text-[7px] md:text-[8px] font-bold opacity-70 uppercase tracking-widest mt-0.5">
                           {btn.desc}
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 shrink-0 group-hover:translate-x-2 transition-transform hidden sm:block" />
+                    <ChevronRight className="w-4 h-4 shrink-0 group-hover:translate-x-1.5 transition-transform hidden sm:block" />
                   </Link>
                 </Button>
               </motion.div>
@@ -137,10 +137,10 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* Background visual flair */}
+      {/* Visual flair */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 left-[-10%] w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[150px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[120px]" />
       </div>
     </div>
   );

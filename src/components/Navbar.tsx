@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -31,25 +32,23 @@ export function Navbar() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  // Sécurité d'hydratation : on n'affiche rien avant le montage client
-  // et on n'affiche la barre que pour les utilisateurs connectés
   if (!mounted || !user) return null;
 
   return (
     <nav className={cn(
       "fixed top-0 w-full z-[80] transition-all duration-500",
-      isScrolled ? "py-4 bg-black/80 backdrop-blur-2xl border-b border-white/5" : "py-8 bg-transparent"
+      isScrolled ? "py-3 bg-black/85 backdrop-blur-2xl border-b border-white/5 shadow-2xl" : "py-6 md:py-8 bg-transparent"
     )}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex flex-col leading-none group">
-          <div className="text-[20px] font-black tracking-tighter text-white uppercase group-hover:text-primary transition-all duration-300">
+          <div className="text-[16px] md:text-[19px] font-black tracking-tighter text-white uppercase group-hover:text-primary transition-all duration-300">
             {settings?.eventName || 'ONE VIBE'}
           </div>
         </Link>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {user.email === 'christianrwemera4@gmail.com' && (
-            <Link href="/admin" className="text-secondary hover:text-white flex items-center gap-2 border border-secondary/20 px-4 py-1.5 rounded-full bg-secondary/5 text-[9px] font-black uppercase tracking-widest transition-all">
+            <Link href="/admin" className="text-secondary hover:text-white flex items-center gap-2 border border-secondary/20 px-3 py-1.5 rounded-full bg-secondary/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all">
               <Lock className="w-3 h-3" /> COCKPIT
             </Link>
           )}
@@ -57,9 +56,9 @@ export function Navbar() {
           <Button 
             onClick={() => signOut(auth!)} 
             variant="ghost" 
-            className="h-10 px-4 rounded-full text-white/40 hover:text-destructive hover:bg-destructive/5 text-[9px] font-black uppercase tracking-widest"
+            className="h-9 px-3 rounded-full text-white/40 hover:text-destructive hover:bg-destructive/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest"
           >
-            <LogOut className="w-3.5 h-3.5 mr-2" /> EXIT
+            <LogOut className="w-3 h-3 mr-1.5" /> EXIT
           </Button>
         </div>
       </div>
