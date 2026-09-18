@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -62,6 +62,12 @@ export default function AdminDashboard() {
   }, [firestore]);
   const { data: talents } = useCollection(talentsCollectionRef);
 
+  const merchCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'merch');
+  }, [firestore]);
+  const { data: merchItems } = useCollection(merchCollectionRef);
+
   // General Settings
   const [eventName, setEventName] = useState('');
   const [eventTagline, setEventTagline] = useState('');
@@ -94,6 +100,7 @@ export default function AdminDashboard() {
 
   const [newProgram, setNewProgram] = useState({ time: '', title: '', desc: '', imageUrl: '' });
   const [newTalent, setNewTalent] = useState({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
+  const [newMerch, setNewMerch] = useState({ name: '', price: '', description: '', imageUrl: '', link: '' });
 
   useEffect(() => {
     if (settings) {
@@ -204,6 +211,17 @@ export default function AdminDashboard() {
     setNewTalent({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
   };
 
+  const handleAddMerch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!merchCollectionRef) return;
+    addDoc(merchCollectionRef, newMerch).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: merchCollectionRef.path, operation: OperationType.CREATE, requestResourceData: newMerch
+      }, err));
+    });
+    setNewMerch({ name: '', price: '', description: '', imageUrl: '', link: '' });
+  };
+
   const handleDeleteDoc = (collectionName: string, id: string) => {
     if (!firestore) return;
     const docRef = doc(firestore, collectionName, id);
@@ -254,9 +272,10 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
+          <TabsList className="grid grid-cols-3 md:grid-cols-7 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
             <TabsTrigger value="general" className="text-[10px] uppercase font-black"><Globe className="w-3 h-3 mr-2" /> Général</TabsTrigger>
             <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><Users className="w-3 h-3 mr-2" /> Inscrits</TabsTrigger>
+            <TabsTrigger value="merch" className="text-[10px] uppercase font-black"><ShoppingBag className="w-3 h-3 mr-2" /> Merch</TabsTrigger>
             <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Univers</TabsTrigger>
             <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Guests</TabsTrigger>
             <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Agenda</TabsTrigger>
@@ -319,6 +338,45 @@ export default function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="merch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
+                <h3 className="text-[11px] font-black uppercase mb-6 italic text-primary">AJOUTER AU MERCH</h3>
+                <form onSubmit={handleAddMerch} className="space-y-4">
+                  <Input required value={newMerch.name} onChange={e => setNewMerch({...newMerch, name: e.target.value})} placeholder="Nom de l'article" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <Input required value={newMerch.price} onChange={e => setNewMerch({...newMerch, price: e.target.value})} placeholder="Prix (ex: 25.000 FC)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <textarea value={newMerch.description} onChange={e => setNewMerch({...newMerch, description: e.target.value})} placeholder="Description courte" className="w-full bg-black border border-white/10 text-xs h-24 rounded-xl px-3 py-2 text-white" />
+                  <div className="flex gap-2">
+                    <Input value={newMerch.imageUrl} onChange={e => setNewMerch({...newMerch, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewMerch({...newMerch, imageUrl: url}), 'merch')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'merch'}>
+                        {isUploading === 'merch' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER L'ARTICLE</Button>
+                </form>
+              </Card>
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Article</TableHead><TableHead className="px-6 text-[9px] uppercase">Prix</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {merchItems?.map((item) => (
+                      <TableRow key={item.id} className="border-white/5">
+                        <TableCell className="px-6 py-4">
+                          <div className="text-[11px] font-black uppercase italic">{item.name}</div>
+                        </TableCell>
+                        <TableCell className="px-6 font-mono text-primary text-[11px]">{item.price}</TableCell>
+                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('merch', item.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="hero">

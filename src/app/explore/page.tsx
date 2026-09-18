@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -46,7 +47,7 @@ export default function ExplorePage() {
     },
     { 
       title: "ONE VIBE MERCH", 
-      href: "#", 
+      href: "/merch", 
       icon: <ShoppingBag className="w-4 h-4" />,
       desc: "T-shirts & Merch officiels" 
     },

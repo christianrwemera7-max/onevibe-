@@ -43,6 +43,19 @@
       },
       "required": ["time", "title", "desc", "imageUrl"]
     },
+    "MerchItem": {
+      "title": "Merch Item",
+      "description": "Article de la boutique officielle",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "link": { "type": "string", "description": "Lien optionnel vers WhatsApp ou paiement" }
+      },
+      "required": ["name", "price", "imageUrl"]
+    },
     "FestivalSettings": {
       "title": "Festival Settings",
       "description": "Configurations globales de l'événement",
@@ -88,6 +101,10 @@
     "/program/{programId}": {
       "schema": "ProgramItem",
       "description": "Liste dynamique de la programmation chronologique"
+    },
+    "/merch/{merchId}": {
+      "schema": "MerchItem",
+      "description": "Articles de la boutique officielle du festival"
     },
     "/settings/festival": {
       "schema": "FestivalSettings",

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -180,7 +181,7 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 items-center">
               <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-xl shadow-primary/30 w-full sm:w-auto"><a href={ticketingUrl} target="_blank">BILLETTERIE <ExternalLink className="ml-2 w-3.5 h-3.5" /></a></Button>
-              <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white border-2 border-primary/20 hover:bg-primary/90 uppercase tracking-[0.2em] shadow-xl shadow-primary/20 w-full sm:w-auto"><a href="/explore">MERCH & T-SHIRTS <ShoppingBag className="ml-2 w-3.5 h-3.5" /></a></Button>
+              <Button asChild size="lg" className="h-14 px-10 text-[9px] font-black rounded-full bg-primary text-white border-2 border-primary/20 hover:bg-primary/90 uppercase tracking-[0.2em] shadow-xl shadow-primary/20 w-full sm:w-auto"><Link href="/merch">MERCH & T-SHIRTS <ShoppingBag className="ml-2 w-3.5 h-3.5" /></Link></Button>
               <Link href="/explore" className="group flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.3em] text-white hover:text-primary italic transition-all">EXPLORER <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" /></Link>
             </div>
           </motion.div>
