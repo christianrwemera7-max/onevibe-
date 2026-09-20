@@ -92,6 +92,14 @@
         "facebookUrl": { "type": "string" },
         "tiktokUrl": { "type": "string" }
       }
+    },
+    "Analytics": {
+      "title": "Website Analytics",
+      "description": "Statistiques de fréquentation",
+      "type": "object",
+      "properties": {
+        "visitorCount": { "type": "number" }
+      }
     }
   },
   "auth": {
@@ -121,6 +129,10 @@
     "/settings/festival": {
       "schema": "FestivalSettings",
       "description": "Paramètres généraux modifiables de l'événement"
+    },
+    "/analytics/global": {
+      "schema": "Analytics",
+      "description": "Compteurs globaux du site"
     }
   }
 }

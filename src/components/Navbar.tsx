@@ -32,7 +32,7 @@ export function Navbar() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  if (!mounted || !user) return null;
+  if (!mounted) return null;
 
   return (
     <nav className={cn(
@@ -47,19 +47,26 @@ export function Navbar() {
         </Link>
         
         <div className="flex items-center gap-3">
-          {user.email === 'christianrwemera4@gmail.com' && (
-            <Link href="/admin" className="text-secondary hover:text-white flex items-center gap-2 border border-secondary/20 px-3 py-1.5 rounded-full bg-secondary/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all">
-              <Lock className="w-3 h-3" /> COCKPIT
-            </Link>
+          {user && user.email === 'christianrwemera4@gmail.com' && (
+            <>
+              <Link href="/admin" className="text-secondary hover:text-white flex items-center gap-2 border border-secondary/20 px-3 py-1.5 rounded-full bg-secondary/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all">
+                <Lock className="w-3 h-3" /> COCKPIT
+              </Link>
+              <Button 
+                onClick={() => signOut(auth!)} 
+                variant="ghost" 
+                className="h-9 px-3 rounded-full text-white/40 hover:text-destructive hover:bg-destructive/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest"
+              >
+                <LogOut className="w-3 h-3 mr-1.5" /> EXIT
+              </Button>
+            </>
           )}
 
-          <Button 
-            onClick={() => signOut(auth!)} 
-            variant="ghost" 
-            className="h-9 px-3 rounded-full text-white/40 hover:text-destructive hover:bg-destructive/5 text-[8px] md:text-[9px] font-black uppercase tracking-widest"
-          >
-            <LogOut className="w-3 h-3 mr-1.5" /> EXIT
-          </Button>
+          {!user && pathname !== '/admin' && (
+            <Link href="/admin" className="text-white/20 hover:text-white text-[8px] uppercase font-black transition-colors">
+              <Lock className="w-2.5 h-2.5" />
+            </Link>
+          )}
         </div>
       </div>
     </nav>

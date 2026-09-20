@@ -5,43 +5,32 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight,
-  Sparkles,
-  ExternalLink,
   Zap,
-  Mail,
-  Lock,
-  User as UserIcon,
-  Phone,
   Star,
   User,
-  ShoppingBag
+  ShoppingBag,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useUser, useAuth, useDoc, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, collection, addDoc } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import { useDoc, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
+import { doc, collection, increment, setDoc } from 'firebase/firestore';
 import { Countdown } from '@/components/Countdown';
 
 export default function LandingPage() {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   const firestore = useFirestore();
-  const { toast } = useToast();
-  
-  const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
-  const [authData, setAuthData] = useState({ email: '', password: '', name: '', phone: '' });
-  const [isAuthPending, setIsAuthPending] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Visitor tracking logic
+    if (firestore) {
+      const statsRef = doc(firestore, 'analytics', 'global');
+      setDoc(statsRef, { visitorCount: increment(1) }, { merge: true });
+    }
+  }, [firestore]);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -86,82 +75,11 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [images]);
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth || !firestore) return;
-    setIsAuthPending(true);
-    try {
-      if (authMode === 'SIGNUP') {
-        const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-        const regData = {
-          userId: userCredential.user.uid,
-          name: authData.name,
-          email: authData.email,
-          phone: authData.phone,
-          type: 'PASS',
-          createdAt: new Date().toISOString(),
-          ticketCode: `MEMBER-${Math.floor(1000 + Math.random() * 9000)}`
-        };
-        addDoc(collection(firestore, 'registrations'), regData);
-        toast({ title: "Bienvenue !", description: "Compte créé." });
-      } else {
-        await signInWithEmailAndPassword(auth, authData.email, authData.password);
-        toast({ title: "Content de vous revoir !" });
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: err.message });
-    } finally {
-      setIsAuthPending(false);
-    }
-  };
-
   const currentImage = images[currentIndex];
-  // Simple check for Pinterest which often fails with Next Image due to redirects
   const isDirectImage = currentImage && !currentImage.includes('pin.it');
 
-  if (isUserLoading || !mounted) {
+  if (!mounted) {
     return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(255,0,128,0.1),transparent_50%)]" />
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full relative z-10">
-          <div className="text-center mb-8">
-            <div className="text-[20px] font-black tracking-tighter text-white uppercase inline-flex items-center gap-2 italic">
-              {eventName} <Sparkles className="text-primary w-5 h-5" />
-            </div>
-            <p className="text-[8px] text-muted-foreground uppercase font-black tracking-[0.4em] mt-2 italic opacity-60">Accès Privé</p>
-          </div>
-          <Card className="bg-white/5 border-white/10 text-white p-8 rounded-[2rem] backdrop-blur-3xl shadow-2xl relative">
-            <form onSubmit={handleAuth} className="space-y-4">
-              <div className="space-y-3">
-                {authMode === 'SIGNUP' && (
-                  <>
-                    <div className="relative"><UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><Input placeholder="Nom complet" required className="bg-black/40 border-white/10 pl-11 h-12 text-sm rounded-xl" value={authData.name} onChange={e => setAuthData({...authData, name: e.target.value})} /></div>
-                    <div className="relative"><Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><Input placeholder="Téléphone" required className="bg-black/40 border-white/10 pl-11 h-12 text-sm rounded-xl" value={authData.phone} onChange={e => setAuthData({...authData, phone: e.target.value})} /></div>
-                  </>
-                )}
-                <div className="relative"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><Input type="email" placeholder="E-mail" required className="bg-black/40 border-white/10 pl-11 h-12 text-sm rounded-xl" value={authData.email} onChange={e => setAuthData({...authData, email: e.target.value})} /></div>
-                <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" /><Input type="password" placeholder="Mot de passe" required className="bg-black/40 border-white/10 pl-11 h-12 text-sm rounded-xl" value={authData.password} onChange={e => setAuthData({...authData, password: e.target.value})} /></div>
-              </div>
-              <Button disabled={isAuthPending} type="submit" className="w-full h-12 bg-primary text-white font-black rounded-xl text-[9px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20">
-                {isAuthPending ? "TRAITEMENT..." : (authMode === 'SIGNUP' ? "CRÉER UN COMPTE" : "ENTRER")}
-              </Button>
-            </form>
-            <div className="mt-6 text-center border-t border-white/5 pt-4">
-              <button 
-                onClick={() => setAuthMode(authMode === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')} 
-                className="text-[8px] text-muted-foreground hover:text-white uppercase font-black tracking-[0.3em] italic"
-              >
-                {authMode === 'SIGNUP' ? "SE CONNECTER" : "CRÉER UN COMPTE"}
-              </button>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    );
   }
 
   return (

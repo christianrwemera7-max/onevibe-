@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag, Palette, Music, Gamepad2 } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag, Palette, Music, Gamepad2, TrendingUp, Eye } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,13 @@ export default function AdminDashboard() {
   const [email, setEmail] = useState('christianrwemera4@gmail.com');
   const [password, setPassword] = useState('0994472599');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Stats logic
+  const analyticsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'analytics', 'global');
+  }, [firestore]);
+  const { data: stats } = useDoc(analyticsRef);
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -270,6 +277,32 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-4 md:p-8 pt-32">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-white/5 border-white/10 p-6 rounded-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase text-muted-foreground">Visiteurs</div>
+                <div className="text-xl font-black italic">{stats?.visitorCount || 0}</div>
+              </div>
+            </div>
+          </Card>
+          <Card className="bg-white/5 border-white/10 p-6 rounded-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase text-muted-foreground">Univers</div>
+                <div className="text-xl font-black italic">{universes?.length || 0}</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
           <div className="text-[18px] font-black tracking-tighter text-white uppercase">{eventName || 'SITE'} <span className="text-primary">COCKPIT</span></div>
           <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Déconnexion</Button>
@@ -439,7 +472,6 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Images Globales et Carousel</h3>
                 
-                {/* Image Background Globale */}
                 <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
                   <label className="text-[9px] uppercase font-black text-primary">IMAGE D'ARRIÈRE-PLAN GLOBALE (TOUTES PAGES)</label>
                   <div className="flex gap-2">
@@ -453,7 +485,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Image Stand */}
                 <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
                   <label className="text-[9px] uppercase font-black text-secondary">IMAGE PAGE STAND (EXPOSANTS)</label>
                   <div className="flex gap-2">
@@ -467,7 +498,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Image 1 */}
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 1 (ACCUEIL)</label>
                   <div className="flex gap-2">
@@ -481,7 +511,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Image 2 */}
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 2</label>
                   <div className="flex gap-2">
@@ -495,7 +524,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Image 3 */}
                 <div className="space-y-2">
                   <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 3</label>
                   <div className="flex gap-2">
