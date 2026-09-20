@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag } from 'lucide-react';
+import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag, Palette, Music, Gamepad2 } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, OperationType } from '@/firebase/errors';
 import { useRouter } from 'next/navigation';
@@ -68,6 +68,12 @@ export default function AdminDashboard() {
   }, [firestore]);
   const { data: merchItems } = useCollection(merchCollectionRef);
 
+  const universesCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'universes');
+  }, [firestore]);
+  const { data: universes } = useCollection(universesCollectionRef);
+
   // General Settings
   const [eventName, setEventName] = useState('');
   const [eventTagline, setEventTagline] = useState('');
@@ -90,17 +96,10 @@ export default function AdminDashboard() {
   const [teaserInput, setTeaserInput] = useState('');
   const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
   
-  // Universes
-  const [musicDesc, setMusicDesc] = useState('');
-  const [musicImg, setMusicImg] = useState('');
-  const [creativeDesc, setCreativeDesc] = useState('');
-  const [creativeImg, setCreativeImg] = useState('');
-  const [digitalDesc, setDigitalDesc] = useState('');
-  const [digitalImg, setDigitalImg] = useState('');
-
   const [newProgram, setNewProgram] = useState({ time: '', title: '', desc: '', imageUrl: '' });
   const [newTalent, setNewTalent] = useState({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
   const [newMerch, setNewMerch] = useState({ name: '', price: '', description: '', imageUrl: '', link: '' });
+  const [newUniverse, setNewUniverse] = useState({ title: '', description: '', imageUrl: '', iconName: 'Music', color: 'primary' as 'primary'|'secondary'|'accent' });
 
   useEffect(() => {
     if (settings) {
@@ -120,12 +119,6 @@ export default function AdminDashboard() {
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
       setIsCarouselEnabled(settings.isCarouselEnabled || false);
-      setMusicDesc(settings.musicDesc || "");
-      setMusicImg(settings.musicImg || "");
-      setCreativeDesc(settings.creativeDesc || "");
-      setCreativeImg(settings.creativeImg || "");
-      setDigitalDesc(settings.digitalDesc || "");
-      setDigitalImg(settings.digitalImg || "");
     }
   }, [settings]);
 
@@ -175,7 +168,7 @@ export default function AdminDashboard() {
       exposantsImg,
       ticketingUrl: ticketingInput, 
       teaserUrl: teaserInput,
-      isCarouselEnabled, musicDesc, musicImg, creativeDesc, creativeImg, digitalDesc, digitalImg,
+      isCarouselEnabled,
       updatedAt: new Date().toISOString()
     };
     setDoc(settingsRef, data, { merge: true }).then(() => {
@@ -220,6 +213,17 @@ export default function AdminDashboard() {
       }, err));
     });
     setNewMerch({ name: '', price: '', description: '', imageUrl: '', link: '' });
+  };
+
+  const handleAddUniverse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!universesCollectionRef) return;
+    addDoc(universesCollectionRef, { ...newUniverse, order: (universes?.length || 0) + 1 }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: universesCollectionRef.path, operation: OperationType.CREATE, requestResourceData: newUniverse
+      }, err));
+    });
+    setNewUniverse({ title: '', description: '', imageUrl: '', iconName: 'Music', color: 'primary' });
   };
 
   const handleDeleteDoc = (collectionName: string, id: string) => {
@@ -379,6 +383,57 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="universes">
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
+                <h3 className="text-[11px] font-black uppercase mb-6 italic text-primary">AJOUTER UN UNIVERS</h3>
+                <form onSubmit={handleAddUniverse} className="space-y-4">
+                  <Input required value={newUniverse.title} onChange={e => setNewUniverse({...newUniverse, title: e.target.value})} placeholder="Titre (ex: VIBE MUSIC)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
+                  <textarea required value={newUniverse.description} onChange={e => setNewUniverse({...newUniverse, description: e.target.value})} placeholder="Description courte" className="w-full bg-black border border-white/10 text-xs h-24 rounded-xl px-3 py-2 text-white" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select className="bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newUniverse.iconName} onChange={e => setNewUniverse({...newUniverse, iconName: e.target.value})}>
+                      <option value="Music">Musique</option>
+                      <option value="Palette">Créatif</option>
+                      <option value="Gamepad2">Digital</option>
+                      <option value="Star">Star</option>
+                    </select>
+                    <select className="bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newUniverse.color} onChange={e => setNewUniverse({...newUniverse, color: e.target.value as any})}>
+                      <option value="primary">Rose (Primary)</option>
+                      <option value="secondary">Bleu (Secondary)</option>
+                      <option value="accent">Violet (Accent)</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={newUniverse.imageUrl} onChange={e => setNewUniverse({...newUniverse, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
+                    <div className="relative">
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewUniverse({...newUniverse, imageUrl: url}), 'universes')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'universes'}>
+                        {isUploading === 'universes' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER L'UNIVERS</Button>
+                </form>
+              </Card>
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Univers</TableHead><TableHead className="px-6 text-[9px] uppercase">Couleur</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {universes?.sort((a,b) => (a.order || 0) - (b.order || 0)).map((uni) => (
+                      <TableRow key={uni.id} className="border-white/5">
+                        <TableCell className="px-6 py-4">
+                          <div className="text-[11px] font-black uppercase italic">{uni.title}</div>
+                        </TableCell>
+                        <TableCell className="px-6 uppercase text-[9px] font-black text-muted-foreground">{uni.color}</TableCell>
+                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('universes', uni.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="hero">
             <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
               <div className="space-y-6">
@@ -478,33 +533,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl w-full">SAUVEGARDER LES MÉDIAS</Button>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="universes">
-            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  { id: 'music', label: 'MUSIC', color: 'text-primary', val: musicImg, setter: setMusicImg, dVal: musicDesc, dSetter: setMusicDesc },
-                  { id: 'creative', label: 'CREATIVE', color: 'text-accent', val: creativeImg, setter: setCreativeImg, dVal: creativeDesc, dSetter: setCreativeDesc },
-                  { id: 'digital', label: 'DIGITAL', color: 'text-secondary', val: digitalImg, setter: setDigitalImg, dVal: digitalDesc, dSetter: setDigitalDesc }
-                ].map((uni) => (
-                  <div key={uni.id} className="p-5 bg-black/40 rounded-2xl border border-white/5 space-y-4">
-                    <div className={`text-xs font-black ${uni.color}`}>VIBE {uni.label}</div>
-                    <textarea value={uni.dVal} onChange={e => uni.dSetter(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl p-2 text-[10px] h-20 text-white" placeholder="Description..." />
-                    <div className="flex gap-2">
-                      <Input value={uni.val} onChange={e => uni.setter(e.target.value)} className="bg-black border-white/10 text-[9px] h-10 rounded-xl flex-1" />
-                      <div className="relative">
-                        <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, uni.setter, uni.id)} />
-                        <Button size="icon" className="h-10 w-10 bg-white/10 rounded-xl" disabled={isUploading === uni.id}>
-                          {isUploading === uni.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-12 px-8 rounded-xl mt-8">SAUVEGARDER LES UNIVERS</Button>
             </Card>
           </TabsContent>
 

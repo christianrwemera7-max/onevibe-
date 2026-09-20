@@ -31,6 +31,20 @@
       },
       "required": ["name", "role", "imageUrl"]
     },
+    "Universe": {
+      "title": "Festival Universe",
+      "description": "Une dimension thématique du festival (Musique, Digital, etc.)",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "iconName": { "type": "string", "description": "Nom de l'icône Lucide" },
+        "color": { "type": "string", "enum": ["primary", "secondary", "accent"] },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "description", "imageUrl"]
+    },
     "ProgramItem": {
       "title": "Program Item",
       "description": "Élément de la programmation horaire du festival",
@@ -73,12 +87,6 @@
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
         "isCarouselEnabled": { "type": "boolean" },
-        "musicDesc": { "type": "string" },
-        "musicImg": { "type": "string" },
-        "creativeDesc": { "type": "string" },
-        "creativeImg": { "type": "string" },
-        "digitalDesc": { "type": "string" },
-        "digitalImg": { "type": "string" },
         "instagramUrl": { "type": "string" },
         "twitterUrl": { "type": "string" },
         "facebookUrl": { "type": "string" },
@@ -97,6 +105,10 @@
     "/talents/{talentId}": {
       "schema": "Talent",
       "description": "Liste dynamique des talents affichés sur le site"
+    },
+    "/universes/{universeId}": {
+      "schema": "Universe",
+      "description": "Liste dynamique des univers thématiques"
     },
     "/program/{programId}": {
       "schema": "ProgramItem",
