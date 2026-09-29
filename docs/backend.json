@@ -1,0 +1,138 @@
+
+{
+  "entities": {
+    "Registration": {
+      "title": "Festival Registration",
+      "description": "Données d'inscription pour les pass et les exposants",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID de l'utilisateur Firebase" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "type": { "type": "string", "enum": ["PASS", "EXPOSITOR"] },
+        "passCategory": { "type": "string", "enum": ["STANDARD", "VIP", null] },
+        "company": { "type": "string", "description": "Nom de la marque pour les exposants" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "ticketCode": { "type": "string", "description": "Code unique généré pour le billet" }
+      },
+      "required": ["userId", "name", "email", "type", "createdAt"]
+    },
+    "Talent": {
+      "title": "Festival Talent",
+      "description": "Artistes, créateurs et entrepreneurs participants",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["MUSIC", "CREATIVE", "BUSINESS", "DIGITAL"] },
+        "role": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "role", "imageUrl"]
+    },
+    "Universe": {
+      "title": "Festival Universe",
+      "description": "Une dimension thématique du festival (Musique, Digital, etc.)",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "iconName": { "type": "string", "description": "Nom de l'icône Lucide" },
+        "color": { "type": "string", "enum": ["primary", "secondary", "accent"] },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "description", "imageUrl"]
+    },
+    "ProgramItem": {
+      "title": "Program Item",
+      "description": "Élément de la programmation horaire du festival",
+      "type": "object",
+      "properties": {
+        "time": { "type": "string" },
+        "title": { "type": "string" },
+        "desc": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["time", "title", "desc", "imageUrl"]
+    },
+    "MerchItem": {
+      "title": "Merch Item",
+      "description": "Article de la boutique officielle",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "link": { "type": "string", "description": "Lien optionnel vers WhatsApp ou paiement" }
+      },
+      "required": ["name", "price", "imageUrl"]
+    },
+    "FestivalSettings": {
+      "title": "Festival Settings",
+      "description": "Configurations globales de l'événement",
+      "type": "object",
+      "properties": {
+        "eventName": { "type": "string", "description": "Nom officiel de l'événement" },
+        "eventTagline": { "type": "string", "description": "Slogan ou description courte" },
+        "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
+        "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
+        "heroImageUrl": { "type": "string" },
+        "heroImageUrl2": { "type": "string" },
+        "heroImageUrl3": { "type": "string" },
+        "globalBgUrl": { "type": "string", "description": "Image d'arrière-plan pour tout le site" },
+        "exposantsImg": { "type": "string", "description": "Image de présentation pour la page Stand" },
+        "ticketingUrl": { "type": "string" },
+        "teaserUrl": { "type": "string" },
+        "isCarouselEnabled": { "type": "boolean" },
+        "instagramUrl": { "type": "string" },
+        "twitterUrl": { "type": "string" },
+        "facebookUrl": { "type": "string" },
+        "tiktokUrl": { "type": "string" }
+      }
+    },
+    "Analytics": {
+      "title": "Website Analytics",
+      "description": "Statistiques de fréquentation",
+      "type": "object",
+      "properties": {
+        "visitorCount": { "type": "number" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/registrations/{registrationId}": {
+      "schema": "Registration",
+      "description": "Inscriptions des participants, achats de pass et codes uniques"
+    },
+    "/talents/{talentId}": {
+      "schema": "Talent",
+      "description": "Liste dynamique des talents affichés sur le site"
+    },
+    "/universes/{universeId}": {
+      "schema": "Universe",
+      "description": "Liste dynamique des univers thématiques"
+    },
+    "/program/{programId}": {
+      "schema": "ProgramItem",
+      "description": "Liste dynamique de la programmation chronologique"
+    },
+    "/merch/{merchId}": {
+      "schema": "MerchItem",
+      "description": "Articles de la boutique officielle du festival"
+    },
+    "/settings/festival": {
+      "schema": "FestivalSettings",
+      "description": "Paramètres généraux modifiables de l'événement"
+    },
+    "/analytics/global": {
+      "schema": "Analytics",
+      "description": "Compteurs globaux du site"
+    }
+  }
+}

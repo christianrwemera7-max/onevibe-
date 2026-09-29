@@ -1,0 +1,182 @@
+
+"use client";
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowRight,
+  Zap,
+  Star,
+  User,
+  ShoppingBag,
+  ExternalLink
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { useDoc, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
+import { doc, collection, increment, setDoc } from 'firebase/firestore';
+import { Countdown } from '@/components/Countdown';
+
+export default function LandingPage() {
+  const firestore = useFirestore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Visitor tracking logic
+    if (firestore) {
+      const statsRef = doc(firestore, 'analytics', 'global');
+      setDoc(statsRef, { visitorCount: increment(1) }, { merge: true });
+    }
+  }, [firestore]);
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'festival');
+  }, [firestore]);
+  const { data: settings } = useDoc(settingsRef);
+
+  const talentsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'talents');
+  }, [firestore]);
+  const { data: talents } = useCollection(talentsRef);
+  
+  const ticketingUrl = settings?.ticketingUrl || 'https://omtevents.com';
+  const eventName = settings?.eventName || 'ONE VIBE';
+  const eventTagline = settings?.eventTagline || 'UNE ÉNERGIE MULTIDIMENSIONNELLE';
+  const eventLocation = settings?.eventLocation || '26 JUIN 2027 • INEPSS • KINSHASA';
+
+  const isValidUrl = (url?: string) => url && (url.startsWith('http://') || url.startsWith('https://'));
+
+  // Carousel logic
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const images = useMemo(() => {
+    const list: string[] = [];
+    if (isValidUrl(settings?.heroImageUrl)) list.push(settings.heroImageUrl);
+    if (isValidUrl(settings?.heroImageUrl2)) list.push(settings.heroImageUrl2);
+    if (isValidUrl(settings?.heroImageUrl3)) list.push(settings.heroImageUrl3);
+    if (settings?.isCarouselEnabled && talents && talents.length > 0) {
+      talents.forEach(t => {
+        if (isValidUrl(t.imageUrl)) list.push(t.imageUrl);
+      });
+    }
+    if (list.length === 0) list.push("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1920");
+    return list;
+  }, [settings, talents]);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [images]);
+
+  const currentImage = images[currentIndex];
+  const isDirectImage = currentImage && !currentImage.includes('pin.it');
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  return (
+    <div className="relative bg-black min-h-screen overflow-x-hidden">
+      {/* Hero Section */}
+      <section className="relative h-screen flex flex-col items-center justify-center">
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="wait">
+            <motion.div key={currentImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
+              {isDirectImage ? (
+                <Image 
+                  src={currentImage} 
+                  alt="Hero" 
+                  fill 
+                  className="object-cover opacity-60 grayscale-[40%] brightness-75" 
+                  priority 
+                  unoptimized={currentImage.includes('cloudinary')}
+                />
+              ) : (
+                <img 
+                  src={currentImage} 
+                  alt="Hero" 
+                  className="w-full h-full object-cover opacity-60 grayscale-[40%] brightness-75" 
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        </div>
+        
+        <div className="max-w-5xl mx-auto px-6 w-full relative z-10 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 md:space-y-8">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-white italic">
+              <Zap className="w-3 h-3 text-primary" /> {eventLocation}
+            </div>
+            <h1 className="text-[20px] md:text-[32px] font-black leading-tight tracking-tighter uppercase italic text-white drop-shadow-2xl">
+              {eventName} <br />
+              <span className="text-primary">{eventTagline}</span>
+            </h1>
+            <div className="pt-2"><Countdown targetDate={settings?.eventDate} /></div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6 items-center">
+              <Button asChild size="lg" className="h-12 px-8 text-[9px] font-black rounded-full bg-primary text-white uppercase tracking-[0.2em] shadow-xl shadow-primary/30 w-full sm:w-auto"><a href={ticketingUrl} target="_blank">BILLETTERIE <ExternalLink className="ml-2 w-3 h-3" /></a></Button>
+              <Button asChild size="lg" className="h-12 px-8 text-[9px] font-black rounded-full bg-primary text-white border-2 border-primary/20 hover:bg-primary/90 uppercase tracking-[0.2em] shadow-xl shadow-primary/20 w-full sm:w-auto"><Link href="/merch">MERCH & T-SHIRTS <ShoppingBag className="ml-2 w-3 h-3" /></Link></Button>
+              <Link href="/explore" className="group flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:text-primary italic transition-all">EXPLORER <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" /></Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Guest Preview Section */}
+      {talents && talents.length > 0 && (
+        <section className="py-12 md:py-20 bg-black relative border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 gap-4">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 text-primary font-black text-[8px] uppercase tracking-[0.3em]">
+                  <Star className="w-3 h-3" /> L'ÉLITE DU FESTIVAL
+                </div>
+                <h2 className="text-[18px] md:text-[28px] font-black uppercase italic text-white leading-none">LES <span className="text-primary">GUESTS</span> CONFIRMÉS</h2>
+              </div>
+              <Link href="/guests" className="text-[8px] font-black uppercase text-muted-foreground hover:text-white flex items-center gap-2 transition-colors italic tracking-widest pb-1 border-b border-primary/40">VOIR TOUT LE CASTING <ArrowRight className="w-3 h-3" /></Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
+              {talents.slice(0, 10).map((talent, idx) => (
+                <motion.div 
+                  key={talent.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group relative"
+                >
+                  <div className="relative aspect-[3/4] rounded-2xl md:rounded-[1.5rem] overflow-hidden mb-2 border border-white/5 bg-neutral-900 shadow-xl">
+                    {talent.imageUrl ? (
+                      <Image 
+                        src={talent.imageUrl} 
+                        alt={talent.name} 
+                        fill 
+                        className="object-cover transition-all duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" 
+                        unoptimized={talent.imageUrl.includes('cloudinary')}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center"><User className="w-8 h-8 text-white/10" /></div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
+                    <div className="absolute bottom-3 left-3 right-3 md:bottom-4 md:left-4 md:right-4">
+                      <div className="text-[9px] md:text-[10px] font-black text-white uppercase italic truncate">{talent.name}</div>
+                      <div className="text-[7px] md:text-[8px] text-primary font-bold uppercase tracking-widest">{talent.role}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

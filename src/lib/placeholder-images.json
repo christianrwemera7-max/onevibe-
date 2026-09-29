@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Crowd at a vibrant festival with neon lights",
+      "imageUrl": "https://picsum.photos/seed/vibe1/1920/1080",
+      "imageHint": "festival crowd"
+    },
+    {
+      "id": "music-vibe",
+      "description": "DJ performing with neon lights",
+      "imageUrl": "https://picsum.photos/seed/music/800/600",
+      "imageHint": "dj music"
+    },
+    {
+      "id": "creative-vibe",
+      "description": "Fashion model on a street style runway",
+      "imageUrl": "https://picsum.photos/seed/creative/800/600",
+      "imageHint": "fashion art"
+    },
+    {
+      "id": "business-vibe",
+      "description": "Young entrepreneur pitching in a modern space",
+      "imageUrl": "https://picsum.photos/seed/business/800/600",
+      "imageHint": "entrepreneur pitch"
+    },
+    {
+      "id": "digital-vibe",
+      "description": "E-sports setup with glowing hardware",
+      "imageUrl": "https://picsum.photos/seed/digital/800/600",
+      "imageHint": "gaming digital"
+    }
+  ]
+}
