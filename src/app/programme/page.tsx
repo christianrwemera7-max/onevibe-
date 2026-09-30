@@ -1,11 +1,10 @@
-
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { Clock, Ticket, Zap } from 'lucide-react';
+import { Ticket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const defaultProgram = [
@@ -15,6 +14,30 @@ const defaultProgram = [
   { time: "19:00", title: "Main Stage Concert", desc: "Têtes d'affiches nationales et internationales." },
   { time: "22:00", title: "Clôture", desc: "Fin de l'événement et after-party." }
 ];
+
+export function ProgramItem({ time, title, desc, idx }: { time: string, title: string, desc: string, idx: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: -10 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ delay: idx * 0.05 }}
+      className="group flex items-start gap-6"
+    >
+      <div className="shrink-0 pt-1">
+        <div className="text-[12px] font-black text-white font-mono italic bg-white/10 border border-white/20 px-3 py-1 rounded-lg">
+          {time}
+        </div>
+      </div>
+      
+      <div className="space-y-1.5 pb-8 border-b border-white/10 flex-1 group-last:border-none">
+        <h3 className="text-[14px] md:text-[16px] font-black uppercase tracking-tight text-white flex items-center gap-2">
+          <span className="text-white text-[10px]">⚡</span> {title}
+        </h3>
+        <p className="text-[11px] text-white/70 italic leading-relaxed opacity-80">{desc}</p>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function ProgrammePage() {
   const firestore = useFirestore();
@@ -38,52 +61,36 @@ export default function ProgrammePage() {
     : defaultProgram;
 
   return (
-    <div className="pt-28 pb-20 bg-neutral-950 min-h-screen">
-      <div className="max-w-3xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 text-primary font-black text-[8px] uppercase tracking-[0.3em] mb-4">
-            <Zap className="w-3.5 h-3.5" /> LE FLOW DU JOUR J
+    <div className="pt-32 pb-24 bg-background min-h-screen">
+      <div className="max-w-2xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-white font-black text-[9px] uppercase tracking-[0.4em] mb-4 italic opacity-70">
+            ⚡ LE FLOW DU JOUR J
           </div>
-          <h1 className="text-[20px] md:text-[25px] font-black tracking-tighter uppercase italic mb-3">AGENDA 2027</h1>
-          <div className="w-12 h-0.5 bg-primary/30 mx-auto mt-2 rounded-full" />
+          <h1 className="text-[26px] md:text-[36px] font-black tracking-tighter uppercase italic text-white leading-none">AGENDA <span className="opacity-40">2027</span></h1>
+          <div className="w-16 h-1 bg-white/40 mx-auto mt-6 rounded-full shadow-2xl" />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-0">
           {activeProgram.map((item, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, x: -10 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="flex items-start gap-5 p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/[0.07] transition-colors"
-            >
-              <div className="shrink-0 flex flex-col items-center justify-center bg-primary/10 border border-primary/20 w-14 h-14 rounded-xl">
-                <span className="text-[10px] font-black text-primary font-mono italic">{item.time}</span>
-              </div>
-              
-              <div className="space-y-1 pt-1">
-                <h3 className="text-[13px] md:text-[14px] font-black uppercase tracking-tight text-white flex items-center gap-2">
-                  <Zap className="w-3 h-3 text-primary" /> {item.title}
-                </h3>
-                <p className="text-[10px] text-muted-foreground italic leading-relaxed">{item.desc}</p>
-              </div>
-            </motion.div>
+            <ProgramItem 
+              key={idx} 
+              time={item.time} 
+              title={item.title} 
+              desc={item.desc} 
+              idx={idx} 
+            />
           ))}
         </div>
 
-        <div className="mt-16 text-center">
-          <Button asChild className="bg-primary text-white font-black text-[9px] uppercase h-11 px-8 rounded-full tracking-widest shadow-lg shadow-primary/20 transition-all">
+        <div className="mt-20 text-center">
+          <Button asChild className="bg-secondary text-black font-black text-[12px] h-16 px-14 rounded-2xl tracking-widest shadow-[0_0_40px_rgba(0,255,255,0.4)] transition-all hover:scale-105 border-none italic">
             <a href={ticketingUrl} target="_blank">
-              <Ticket className="w-3.5 h-3.5 mr-2" /> RÉSERVER MON BILLET
+              <Ticket className="w-6 h-6 mr-3" /> RÉSERVER MON BILLET
             </a>
           </Button>
+          <p className="mt-4 text-[9px] text-white/30 font-black uppercase italic tracking-widest">Le programme peut être sujet à des ajustements ⚡</p>
         </div>
-
-        {(!activeProgram || activeProgram.length === 0) && (
-          <div className="text-center py-12 border border-white/5 border-dashed rounded-3xl">
-            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest italic">Chargement du flow...</p>
-          </div>
-        )}
       </div>
     </div>
   );

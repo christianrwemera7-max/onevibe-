@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -60,7 +59,7 @@ export default function ExplorePage() {
   ];
 
   return (
-    <div className="pt-28 pb-16 bg-black min-h-screen">
+    <div className="pt-28 pb-16 bg-background min-h-screen">
       {/* Teaser Section */}
       {teaserUrl && getYoutubeId(teaserUrl) && (
         <section className="mb-16 md:mb-20 relative">
@@ -70,20 +69,20 @@ export default function ExplorePage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-8 md:mb-12"
             >
-              <div className="inline-flex items-center gap-2 text-primary font-black text-[8px] md:text-[9px] uppercase tracking-[0.3em] mb-5">
+              <div className="inline-flex items-center gap-2 text-white font-black text-[8px] md:text-[9px] uppercase tracking-[0.3em] mb-5 italic opacity-80">
                 <Sparkles className="w-3.5 h-3.5" /> IMMERSION TOTALE
               </div>
               
-              <h1 className="flex flex-col items-center leading-none mb-6">
-                <span className="text-[28px] md:text-[45px] font-black uppercase italic tracking-tighter text-white">
-                  TEASER <span className="text-primary">OFFICIEL</span>
+              <h1 className="flex flex-col items-center leading-none mb-6 text-white">
+                <span className="text-[28px] md:text-[45px] font-black uppercase italic tracking-tighter">
+                  TEASER <span className="opacity-40">OFFICIEL</span>
                 </span>
-                <span className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] text-white/20 mt-1 italic">
+                <span className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] opacity-30 mt-1 italic">
                   {settings?.eventName || 'ONE VIBE FEST'}
                 </span>
               </h1>
               
-              <div className="w-12 h-1 bg-primary/30 mx-auto rounded-full" />
+              <div className="w-12 h-1 bg-white/20 mx-auto rounded-full" />
             </motion.div>
 
             <motion.div 
@@ -118,7 +117,7 @@ export default function ExplorePage() {
               >
                 <Button 
                   asChild
-                  className="w-full h-16 md:h-18 bg-[#b5005b] hover:bg-[#9d004e] text-white rounded-2xl md:rounded-full flex items-center justify-between px-6 md:px-10 group transition-all hover:scale-[1.01] shadow-lg border-none"
+                  className="w-full h-16 md:h-18 bg-white/10 hover:bg-white/20 text-white rounded-2xl md:rounded-full flex items-center justify-between px-6 md:px-10 group transition-all hover:scale-[1.01] shadow-lg border border-white/5"
                 >
                   <Link href={btn.href}>
                     <div className="flex items-center gap-4">
@@ -145,8 +144,8 @@ export default function ExplorePage() {
 
       {/* Visual flair */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[120px]" />
       </div>
     </div>
   );

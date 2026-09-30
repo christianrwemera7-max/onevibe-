@@ -88,7 +88,6 @@ export default function DynamicUniversePage() {
           </div>
 
           <div className="text-center py-10 border border-white/5 border-dashed rounded-[2rem]">
-            <Star className={`w-8 h-8 text-${universe.color} mx-auto mb-4 opacity-30`} />
             <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest italic">Le programme spécifique de cet univers sera dévoilé prochainement...</p>
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -10,12 +9,28 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Plus, Trash, Calendar, Users, Settings as SettingsIcon, LogOut, Star, LayoutGrid, Upload, Loader2, Download, Globe, Share2, Image as ImageIcon, ShoppingBag, Palette, Music, Gamepad2, TrendingUp, Eye } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, OperationType } from '@/firebase/errors';
+import { 
+  Save, 
+  Trash, 
+  Calendar, 
+  Users, 
+  LogOut, 
+  Star, 
+  Upload, 
+  Loader2, 
+  Download, 
+  Globe, 
+  Image as ImageIcon, 
+  ShoppingBag, 
+  Zap, 
+  Palette,
+  TrendingUp,
+  Eye,
+  Handshake,
+  Images,
+  LayoutGrid
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { uploadToCloudinary } from '@/app/actions/cloudinary-upload';
 
@@ -39,93 +54,67 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Stats logic
-  const analyticsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'analytics', 'global');
-  }, [firestore]);
+  const analyticsRef = useMemoFirebase(() => firestore ? doc(firestore, 'analytics', 'global') : null, [firestore]);
   const { data: stats } = useDoc(analyticsRef);
 
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'settings', 'festival');
-  }, [firestore]);
+  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'festival') : null, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  const programCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'program');
-  }, [firestore]);
-  const { data: programItems } = useCollection(programCollectionRef);
+  const programRef = useMemoFirebase(() => firestore ? collection(firestore, 'program') : null, [firestore]);
+  const { data: programItems } = useCollection(programRef);
 
-  const registrationsCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'registrations');
-  }, [firestore]);
-  const { data: registrations } = useCollection(registrationsCollectionRef);
+  const registrationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'registrations') : null, [firestore]);
+  const { data: registrations } = useCollection(registrationsRef);
 
-  const talentsCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'talents');
-  }, [firestore]);
-  const { data: talents } = useCollection(talentsCollectionRef);
+  const talentsRef = useMemoFirebase(() => firestore ? collection(firestore, 'talents') : null, [firestore]);
+  const { data: talents } = useCollection(talentsRef);
 
-  const merchCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'merch');
-  }, [firestore]);
-  const { data: merchItems } = useCollection(merchCollectionRef);
+  const merchRef = useMemoFirebase(() => firestore ? collection(firestore, 'merch') : null, [firestore]);
+  const { data: merchItems } = useCollection(merchRef);
 
-  const universesCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'universes');
-  }, [firestore]);
-  const { data: universes } = useCollection(universesCollectionRef);
+  const sponsorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sponsors') : null, [firestore]);
+  const { data: sponsors } = useCollection(sponsorsRef);
 
-  // General Settings
-  const [eventName, setEventName] = useState('');
-  const [eventTagline, setEventTagline] = useState('');
+  const galleryRef = useMemoFirebase(() => firestore ? collection(firestore, 'gallery') : null, [firestore]);
+  const { data: galleryItems } = useCollection(galleryRef);
+
+  const universesRef = useMemoFirebase(() => firestore ? collection(firestore, 'universes') : null, [firestore]);
+  const { data: universes } = useCollection(universesRef);
+
+  // Form states
+  const [logoUrl, setLogoUrl] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [eventLocation, setEventLocation] = useState('');
-
-  // Socials
   const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
   const [twitterUrl, setTwitterUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
-  const [tiktokUrl, setTiktokUrl] = useState('');
-
-  // Media Settings
-  const [heroInput, setHeroInput] = useState('');
-  const [heroInput2, setHeroInput2] = useState('');
-  const [heroInput3, setHeroInput3] = useState('');
+  const [spotVideoUrl, setSpotVideoUrl] = useState('');
   const [globalBgUrl, setGlobalBgUrl] = useState('');
   const [exposantsImg, setExposantsImg] = useState('');
   const [ticketingInput, setTicketingInput] = useState('');
   const [teaserInput, setTeaserInput] = useState('');
-  const [isCarouselEnabled, setIsCarouselEnabled] = useState(false);
   
   const [newProgram, setNewProgram] = useState({ time: '', title: '', desc: '', imageUrl: '' });
   const [newTalent, setNewTalent] = useState({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
+  const [newSponsor, setNewSponsor] = useState({ name: '', logoUrl: '', tier: 'PARTNER' });
   const [newMerch, setNewMerch] = useState({ name: '', price: '', description: '', imageUrl: '', link: '' });
-  const [newUniverse, setNewUniverse] = useState({ title: '', description: '', imageUrl: '', iconName: 'Music', color: 'primary' as 'primary'|'secondary'|'accent' });
+  const [newGalleryItem, setNewGalleryItem] = useState({ imageUrl: '', description: '' });
 
   useEffect(() => {
     if (settings) {
-      setEventName(settings.eventName || 'ONE VIBE');
-      setEventTagline(settings.eventTagline || 'UNE ÉNERGIE MULTIDIMENSIONNELLE');
+      setLogoUrl(settings.logoUrl || '');
       setEventDate(settings.eventDate || '2027-06-26T12:00:00');
       setEventLocation(settings.eventLocation || 'INEPSS • KINSHASA');
       setInstagramUrl(settings.instagramUrl || '');
+      setTiktokUrl(settings.tiktokUrl || '');
       setTwitterUrl(settings.twitterUrl || '');
       setFacebookUrl(settings.facebookUrl || '');
-      setTiktokUrl(settings.tiktokUrl || '');
-      setHeroInput(settings.heroImageUrl || '');
-      setHeroInput2(settings.heroImageUrl2 || '');
-      setHeroInput3(settings.heroImageUrl3 || '');
+      setSpotVideoUrl(settings.spotVideoUrl || '');
       setGlobalBgUrl(settings.globalBgUrl || '');
       setExposantsImg(settings.exposantsImg || '');
       setTicketingInput(settings.ticketingUrl || '');
       setTeaserInput(settings.teaserUrl || '');
-      setIsCarouselEnabled(settings.isCarouselEnabled || false);
     }
   }, [settings]);
 
@@ -135,9 +124,9 @@ export default function AdminDashboard() {
     setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Accès autorisé", description: "Cockpit activé." });
+      toast({ title: "Accès autorisé" });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Accès refusé", description: "Identifiants invalides." });
+      toast({ variant: "destructive", title: "Accès refusé" });
     } finally {
       setIsLoggingIn(false);
     }
@@ -146,18 +135,16 @@ export default function AdminDashboard() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void, fieldKey: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(fieldKey);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', fieldKey);
-
     try {
       const result = await uploadToCloudinary(formData);
       setter(result.url);
-      toast({ title: "Fichier importé", description: "Le média a été stabilisé sur Cloudinary." });
+      toast({ title: "Média stabilisé" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur d'import", description: error.message });
+      toast({ variant: "destructive", title: "Erreur d'import" });
     } finally {
       setIsUploading(null);
     }
@@ -166,80 +153,66 @@ export default function AdminDashboard() {
   const handleSaveSettings = () => {
     if (!settingsRef) return;
     const data = {
-      eventName, eventTagline, eventDate, eventLocation,
-      instagramUrl, twitterUrl, facebookUrl, tiktokUrl,
-      heroImageUrl: heroInput, 
-      heroImageUrl2: heroInput2, 
-      heroImageUrl3: heroInput3, 
-      globalBgUrl,
-      exposantsImg,
-      ticketingUrl: ticketingInput, 
-      teaserUrl: teaserInput,
-      isCarouselEnabled,
+      logoUrl, eventDate, eventLocation,
+      instagramUrl, tiktokUrl, twitterUrl, facebookUrl,
+      spotVideoUrl, globalBgUrl, exposantsImg,
+      ticketingUrl: ticketingInput, teaserUrl: teaserInput,
       updatedAt: new Date().toISOString()
     };
     setDoc(settingsRef, data, { merge: true }).then(() => {
       toast({ title: "Configuration enregistrée" });
-    }).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: settingsRef.path, operation: OperationType.UPDATE, requestResourceData: data
-      }, err));
     });
   };
 
   const handleAddProgram = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!programCollectionRef) return;
-    const data = { ...newProgram, imageUrl: newProgram.imageUrl || "" };
-    addDoc(programCollectionRef, data).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: programCollectionRef.path, operation: OperationType.CREATE, requestResourceData: data
-      }, err));
+    if (!programRef) return;
+    addDoc(programRef, newProgram).then(() => {
+      setNewProgram({ time: '', title: '', desc: '', imageUrl: '' });
+      toast({ title: "Agenda mis à jour" });
     });
-    setNewProgram({ time: '', title: '', desc: '', imageUrl: '' });
   };
 
   const handleAddTalent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!talentsCollectionRef) return;
-    const data = { ...newTalent, imageUrl: newTalent.imageUrl || "" };
-    addDoc(talentsCollectionRef, data).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: talentsCollectionRef.path, operation: OperationType.CREATE, requestResourceData: data
-      }, err));
+    if (!talentsRef) return;
+    addDoc(talentsRef, newTalent).then(() => {
+      setNewTalent({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
+      toast({ title: "Guest ajouté" });
     });
-    setNewTalent({ name: '', role: '', category: 'MUSIC', imageUrl: '' });
+  };
+
+  const handleAddSponsor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sponsorsRef) return;
+    addDoc(sponsorsRef, newSponsor).then(() => {
+      setNewSponsor({ name: '', logoUrl: '', tier: 'PARTNER' });
+      toast({ title: "Sponsor ajouté" });
+    });
   };
 
   const handleAddMerch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!merchCollectionRef) return;
-    addDoc(merchCollectionRef, newMerch).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: merchCollectionRef.path, operation: OperationType.CREATE, requestResourceData: newMerch
-      }, err));
+    if (!merchRef) return;
+    addDoc(merchRef, newMerch).then(() => {
+      setNewMerch({ name: '', price: '', description: '', imageUrl: '', link: '' });
+      toast({ title: "Article ajouté" });
     });
-    setNewMerch({ name: '', price: '', description: '', imageUrl: '', link: '' });
   };
 
-  const handleAddUniverse = (e: React.FormEvent) => {
+  const handleAddGalleryItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!universesCollectionRef) return;
-    addDoc(universesCollectionRef, { ...newUniverse, order: (universes?.length || 0) + 1 }).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: universesCollectionRef.path, operation: OperationType.CREATE, requestResourceData: newUniverse
-      }, err));
+    if (!galleryRef) return;
+    addDoc(galleryRef, { ...newGalleryItem, createdAt: new Date().toISOString() }).then(() => {
+      setNewGalleryItem({ imageUrl: '', description: '' });
+      toast({ title: "Image ajoutée" });
     });
-    setNewUniverse({ title: '', description: '', imageUrl: '', iconName: 'Music', color: 'primary' });
   };
 
   const handleDeleteDoc = (collectionName: string, id: string) => {
     if (!firestore) return;
-    const docRef = doc(firestore, collectionName, id);
-    deleteDoc(docRef).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: docRef.path, operation: OperationType.DELETE
-      }, err));
+    deleteDoc(doc(firestore, collectionName, id)).then(() => {
+      toast({ title: "Supprimé" });
     });
   };
 
@@ -253,21 +226,21 @@ export default function AdminDashboard() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `participants-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `onevibe-data-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
-  if (isUserLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white uppercase text-[10px] tracking-widest font-black">Chargement...</div>;
+  if (isUserLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-white italic font-black">Chargement...</div>;
 
   if (!user || user.email !== 'christianrwemera4@gmail.com') {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-black border-white/10 text-white p-10 rounded-[2.5rem] shadow-2xl">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full bg-black/40 border-white/10 text-white p-10 rounded-[2.5rem] shadow-2xl backdrop-blur-3xl">
           <form onSubmit={handleLogin} className="space-y-4">
-            <h2 className="text-center font-black uppercase text-lg mb-6">ADMIN COCKPIT</h2>
-            <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-white/5 border-white/10 h-14 rounded-2xl" />
-            <Input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required className="bg-white/5 border-white/10 h-14 rounded-2xl" />
-            <Button disabled={isLoggingIn} type="submit" className="w-full bg-primary text-white font-black h-14 uppercase text-[10px] tracking-widest rounded-2xl">ENTRER</Button>
+            <h2 className="text-center font-black uppercase text-lg mb-6 tracking-tighter italic">COCKPIT ACCESS</h2>
+            <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-white/5 border-white/10 h-14 rounded-2xl italic" />
+            <Input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required className="bg-white/5 border-white/10 h-14 rounded-2xl italic" />
+            <Button disabled={isLoggingIn} type="submit" className="w-full bg-white text-primary font-black h-14 uppercase text-[10px] tracking-widest rounded-2xl border-none italic">ENTRER</Button>
           </form>
         </Card>
       </div>
@@ -275,100 +248,88 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-4 md:p-8 pt-32">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white/5 border-white/10 p-6 rounded-2xl">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                <Eye className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] font-black uppercase text-muted-foreground">Visiteurs</div>
-                <div className="text-xl font-black italic">{stats?.visitorCount || 0}</div>
-              </div>
+    <div className="min-h-screen bg-background text-white p-4 md:p-8 pt-32 font-display">
+      <div className="max-w-7xl mx-auto space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center"><Eye className="w-8 h-8 text-white" /></div>
+              <div><div className="text-[10px] font-black uppercase text-white/40 italic mb-1">Visiteurs</div><div className="text-2xl font-black italic">{stats?.visitorCount || 0}</div></div>
             </div>
           </Card>
-          <Card className="bg-white/5 border-white/10 p-6 rounded-2xl">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] font-black uppercase text-muted-foreground">Univers</div>
-                <div className="text-xl font-black italic">{universes?.length || 0}</div>
-              </div>
+          <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center"><Users className="w-8 h-8 text-white" /></div>
+              <div><div className="text-[10px] font-black uppercase text-white/40 italic mb-1">Inscrits</div><div className="text-2xl font-black italic">{registrations?.length || 0}</div></div>
+            </div>
+          </Card>
+          <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center"><TrendingUp className="w-8 h-8 text-white" /></div>
+              <div><div className="text-[10px] font-black uppercase text-white/40 italic mb-1">Univers</div><div className="text-2xl font-black italic">{universes?.length || 0}</div></div>
+            </div>
+          </Card>
+          <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center"><Star className="w-8 h-8 text-white" /></div>
+              <div><div className="text-[10px] font-black uppercase text-white/40 italic mb-1">Guests</div><div className="text-2xl font-black italic">{talents?.length || 0}</div></div>
             </div>
           </Card>
         </div>
 
-        <div className="flex justify-between items-center border-b border-white/10 pb-6">
-          <div className="text-[18px] font-black tracking-tighter text-white uppercase">{eventName || 'SITE'} <span className="text-primary">COCKPIT</span></div>
-          <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[9px] h-9 text-destructive hover:bg-destructive/10 uppercase font-black rounded-xl"><LogOut className="w-3.5 h-3.5 mr-2" /> Déconnexion</Button>
+        <div className="flex justify-between items-center border-b border-white/10 pb-8">
+          <div className="text-[22px] font-black tracking-tighter text-white uppercase italic">IDENTITY <span className="text-primary">COCKPIT</span></div>
+          <Button onClick={() => signOut(auth!)} variant="ghost" className="text-[10px] h-10 text-white/40 uppercase font-black rounded-xl hover:bg-white/5 italic"><LogOut className="w-4 h-4 mr-2" /> EXIT</Button>
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid grid-cols-3 md:grid-cols-7 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
-            <TabsTrigger value="general" className="text-[10px] uppercase font-black"><Globe className="w-3 h-3 mr-2" /> Général</TabsTrigger>
-            <TabsTrigger value="tickets" className="text-[10px] uppercase font-black"><Users className="w-3 h-3 mr-2" /> Inscrits</TabsTrigger>
-            <TabsTrigger value="merch" className="text-[10px] uppercase font-black"><ShoppingBag className="w-3 h-3 mr-2" /> Merch</TabsTrigger>
-            <TabsTrigger value="universes" className="text-[10px] uppercase font-black"><LayoutGrid className="w-3 h-3 mr-2" /> Univers</TabsTrigger>
-            <TabsTrigger value="talents" className="text-[10px] uppercase font-black"><Star className="w-3 h-3 mr-2" /> Guests</TabsTrigger>
-            <TabsTrigger value="program" className="text-[10px] uppercase font-black"><Calendar className="w-3 h-3 mr-2" /> Agenda</TabsTrigger>
-            <TabsTrigger value="hero" className="text-[10px] uppercase font-black"><SettingsIcon className="w-3 h-3 mr-2" /> Médias</TabsTrigger>
+          <TabsList className="grid grid-cols-3 md:grid-cols-8 bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
+            <TabsTrigger value="general" className="text-[10px] font-black italic">GÉNÉRAL</TabsTrigger>
+            <TabsTrigger value="tickets" className="text-[10px] font-black italic">INSCRITS</TabsTrigger>
+            <TabsTrigger value="merch" className="text-[10px] font-black italic">MERCH</TabsTrigger>
+            <TabsTrigger value="sponsors" className="text-[10px] font-black italic">SPONSORS</TabsTrigger>
+            <TabsTrigger value="gallery" className="text-[10px] font-black italic">GALERIE</TabsTrigger>
+            <TabsTrigger value="universes" className="text-[10px] font-black italic">UNIVERS</TabsTrigger>
+            <TabsTrigger value="talents" className="text-[10px] font-black italic">LINE-UP</TabsTrigger>
+            <TabsTrigger value="hero" className="text-[10px] font-black italic">MÉDIAS</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
-            <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-[11px] font-black uppercase tracking-widest italic border-b border-white/5 pb-2 text-primary">Identité du Festival</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-muted-foreground">NOM LOGO</label>
-                    <Input value={eventName} onChange={(e) => setEventName(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-muted-foreground">TAGLINE</label>
-                    <Input value={eventTagline} onChange={(e) => setEventTagline(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-muted-foreground">LIEU ET DATE AFFICHÉS</label>
-                    <Input value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
+            <Card className="bg-white/5 border-white/10 text-white rounded-3xl p-10 max-w-2xl space-y-10 shadow-2xl backdrop-blur-xl">
+              <div className="space-y-6">
+                <h3 className="text-[12px] font-black uppercase tracking-widest italic text-white/80 border-b border-white/5 pb-3">Identité de l'événement</h3>
+                <div className="flex gap-4">
+                  <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="URL Logo PNG" className="bg-black/40 border-white/10 h-14 rounded-2xl italic text-xs flex-1" />
+                  <div className="relative">
+                    <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setLogoUrl, 'logo')} />
+                    <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'logo'}><Upload className="w-4 h-4 text-white" /></Button>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4 pt-4 border-t border-white/5">
-                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-secondary flex items-center gap-2"><Share2 className="w-4 h-4" /> Réseaux Sociaux</h3>
+                <Input value={eventLocation} onChange={e => setEventLocation(e.target.value)} placeholder="Lieu et Date affichés" className="bg-black/40 border-white/10 h-14 rounded-2xl italic text-sm font-black" />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="Instagram" className="bg-black border-white/10 h-12 rounded-xl" />
-                  <Input value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} placeholder="TikTok" className="bg-black border-white/10 h-12 rounded-xl" />
-                  <Input value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)} placeholder="Twitter/X" className="bg-black border-white/10 h-12 rounded-xl" />
-                  <Input value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder="Facebook" className="bg-black border-white/10 h-12 rounded-xl" />
+                   <Input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="Instagram" className="bg-black/40 border-white/10 h-12 rounded-xl italic text-xs" />
+                   <Input value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} placeholder="TikTok" className="bg-black/40 border-white/10 h-12 rounded-xl italic text-xs" />
                 </div>
               </div>
-              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl w-full"><Save className="w-4 h-4 mr-2" /> ENREGISTRER</Button>
+              <Button onClick={handleSaveSettings} className="w-full bg-white text-primary font-black text-[11px] h-14 rounded-2xl italic border-none shadow-2xl">SAUVEGARDER</Button>
             </Card>
           </TabsContent>
 
           <TabsContent value="tickets">
-            <Card className="bg-white/5 border-white/10 text-white rounded-[2rem] overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between border-b border-white/5">
-                <CardTitle className="text-xs uppercase font-black">Base de Données Inscrits</CardTitle>
-                <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[9px] h-9 rounded-xl"><Download className="w-3 h-3 mr-2" /> EXPORT CSV</Button>
+            <Card className="bg-white/5 border-white/10 text-white rounded-3xl overflow-hidden backdrop-blur-xl">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 p-8">
+                <CardTitle className="text-sm uppercase font-black italic">Database Participants</CardTitle>
+                <Button onClick={handleExportCSV} variant="outline" className="bg-white/5 border-white/10 text-[10px] h-10 rounded-xl font-black italic"><Download className="w-4 h-4 mr-2" /> EXPORT CSV</Button>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Participant</TableHead><TableHead className="px-6 text-[9px] uppercase">Type</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow className="border-white/5"><TableHead className="px-8">Participant</TableHead><TableHead className="px-8">Type</TableHead><TableHead className="text-right px-8">Action</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {registrations?.map((reg) => (
-                      <TableRow key={reg.id} className="border-white/5">
-                        <TableCell className="px-6 py-4">
-                          <div className="font-black text-[11px] uppercase italic">{reg.name}</div>
-                          <div className="text-[9px] text-muted-foreground">{reg.email} • {reg.phone}</div>
-                        </TableCell>
-                        <TableCell className="px-6"><span className="text-[8px] border border-white/10 px-2 py-0.5 rounded-full font-black">{reg.type}</span></TableCell>
-                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive/50" onClick={() => handleDeleteDoc('registrations', reg.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
+                    {registrations?.map(reg => (
+                      <TableRow key={reg.id} className="border-white/5 hover:bg-white/[0.02]">
+                        <TableCell className="px-8 py-5"><div className="font-black text-[14px] uppercase italic">{reg.name}</div><div className="text-[10px] text-white/40">{reg.email}</div></TableCell>
+                        <TableCell className="px-8"><span className="text-[9px] border border-white/10 px-2 py-0.5 rounded-full">{reg.type}</span></TableCell>
+                        <TableCell className="text-right px-8"><Button size="icon" variant="ghost" onClick={() => handleDeleteDoc('registrations', reg.id)}><Trash className="w-3.5 h-3.5 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -377,37 +338,30 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="merch">
+          <TabsContent value="sponsors">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
-                <h3 className="text-[11px] font-black uppercase mb-6 italic text-primary">AJOUTER AU MERCH</h3>
-                <form onSubmit={handleAddMerch} className="space-y-4">
-                  <Input required value={newMerch.name} onChange={e => setNewMerch({...newMerch, name: e.target.value})} placeholder="Nom de l'article" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newMerch.price} onChange={e => setNewMerch({...newMerch, price: e.target.value})} placeholder="Prix (ex: 25.000 FC)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <textarea value={newMerch.description} onChange={e => setNewMerch({...newMerch, description: e.target.value})} placeholder="Description courte" className="w-full bg-black border border-white/10 text-xs h-24 rounded-xl px-3 py-2 text-white" />
+              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl h-fit backdrop-blur-xl">
+                <h3 className="text-[11px] font-black uppercase mb-8 italic flex items-center gap-3"><Handshake className="w-5 h-5 text-primary" /> Sponsor</h3>
+                <form onSubmit={handleAddSponsor} className="space-y-4">
+                  <Input required value={newSponsor.name} onChange={e => setNewSponsor({...newSponsor, name: e.target.value})} placeholder="Nom du partenaire" className="bg-black/40 border-white/10 h-12 rounded-xl text-xs italic" />
                   <div className="flex gap-2">
-                    <Input value={newMerch.imageUrl} onChange={e => setNewMerch({...newMerch, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
+                    <Input value={newSponsor.logoUrl} onChange={e => setNewSponsor({...newSponsor, logoUrl: e.target.value})} placeholder="URL Logo" className="bg-black/40 border-white/10 h-12 rounded-xl text-xs flex-1" />
                     <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewMerch({...newMerch, imageUrl: url}), 'merch')} />
-                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'merch'}>
-                        {isUploading === 'merch' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                      </Button>
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, url => setNewSponsor({...newSponsor, logoUrl: url}), 'sponsors')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'sponsors'}><Upload className="w-4 h-4" /></Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER L'ARTICLE</Button>
+                  <Button type="submit" className="w-full bg-white text-primary font-black h-12 rounded-xl text-[10px] italic">AJOUTER</Button>
                 </form>
               </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Article</TableHead><TableHead className="px-6 text-[9px] uppercase">Prix</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="px-8">Partenaire</TableHead><TableHead className="text-right px-8">Action</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {merchItems?.map((item) => (
+                    {sponsors?.map(item => (
                       <TableRow key={item.id} className="border-white/5">
-                        <TableCell className="px-6 py-4">
-                          <div className="text-[11px] font-black uppercase italic">{item.name}</div>
-                        </TableCell>
-                        <TableCell className="px-6 font-mono text-primary text-[11px]">{item.price}</TableCell>
-                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('merch', item.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
+                        <TableCell className="px-8 py-4"><div className="flex items-center gap-4"><div className="w-12 h-8 relative bg-white/5 rounded p-1">{item.logoUrl && <img src={item.logoUrl} className="w-full h-full object-contain" />}</div><span className="font-black uppercase italic text-xs">{item.name}</span></div></TableCell>
+                        <TableCell className="text-right px-8"><Button size="icon" variant="ghost" onClick={() => handleDeleteDoc('sponsors', item.id)}><Trash className="w-3.5 h-3.5 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -416,222 +370,30 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="universes">
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
-                <h3 className="text-[11px] font-black uppercase mb-6 italic text-primary">AJOUTER UN UNIVERS</h3>
-                <form onSubmit={handleAddUniverse} className="space-y-4">
-                  <Input required value={newUniverse.title} onChange={e => setNewUniverse({...newUniverse, title: e.target.value})} placeholder="Titre (ex: VIBE MUSIC)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <textarea required value={newUniverse.description} onChange={e => setNewUniverse({...newUniverse, description: e.target.value})} placeholder="Description courte" className="w-full bg-black border border-white/10 text-xs h-24 rounded-xl px-3 py-2 text-white" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <select className="bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newUniverse.iconName} onChange={e => setNewUniverse({...newUniverse, iconName: e.target.value})}>
-                      <option value="Music">Musique</option>
-                      <option value="Palette">Créatif</option>
-                      <option value="Gamepad2">Digital</option>
-                      <option value="Star">Star</option>
-                    </select>
-                    <select className="bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newUniverse.color} onChange={e => setNewUniverse({...newUniverse, color: e.target.value as any})}>
-                      <option value="primary">Rose (Primary)</option>
-                      <option value="secondary">Bleu (Secondary)</option>
-                      <option value="accent">Violet (Accent)</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input value={newUniverse.imageUrl} onChange={e => setNewUniverse({...newUniverse, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewUniverse({...newUniverse, imageUrl: url}), 'universes')} />
-                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'universes'}>
-                        {isUploading === 'universes' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER L'UNIVERS</Button>
-                </form>
-              </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
-                <Table>
-                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Univers</TableHead><TableHead className="px-6 text-[9px] uppercase">Couleur</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {universes?.sort((a,b) => (a.order || 0) - (b.order || 0)).map((uni) => (
-                      <TableRow key={uni.id} className="border-white/5">
-                        <TableCell className="px-6 py-4">
-                          <div className="text-[11px] font-black uppercase italic">{uni.title}</div>
-                        </TableCell>
-                        <TableCell className="px-6 uppercase text-[9px] font-black text-muted-foreground">{uni.color}</TableCell>
-                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('universes', uni.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="hero">
-            <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-8 max-w-2xl space-y-8">
-              <div className="space-y-6">
-                <h3 className="text-[11px] font-black uppercase tracking-widest italic text-primary">Images Globales et Carousel</h3>
-                
-                <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <label className="text-[9px] uppercase font-black text-primary">IMAGE D'ARRIÈRE-PLAN GLOBALE (TOUTES PAGES)</label>
-                  <div className="flex gap-2">
-                    <Input value={globalBgUrl} onChange={e => setGlobalBgUrl(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setGlobalBgUrl, 'globalBg')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'globalBg'}>
-                        {isUploading === 'globalBg' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <label className="text-[9px] uppercase font-black text-secondary">IMAGE PAGE STAND (EXPOSANTS)</label>
-                  <div className="flex gap-2">
-                    <Input value={exposantsImg} onChange={e => setExposantsImg(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setExposantsImg, 'exposantsImg')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'exposantsImg'}>
-                        {isUploading === 'exposantsImg' ? <Loader2 className="w-4 h-4 animate-spin text-secondary" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 1 (ACCUEIL)</label>
-                  <div className="flex gap-2">
-                    <Input value={heroInput} onChange={e => setHeroInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setHeroInput, 'hero')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero'}>
-                        {isUploading === 'hero' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 2</label>
-                  <div className="flex gap-2">
-                    <Input value={heroInput2} onChange={e => setHeroInput2(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setHeroInput2, 'hero2')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero2'}>
-                        {isUploading === 'hero2' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-black text-muted-foreground">IMAGE HERO 3</label>
-                  <div className="flex gap-2">
-                    <Input value={heroInput3} onChange={e => setHeroInput3(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, setHeroInput3, 'hero3')} />
-                      <Button size="icon" className="h-14 w-14 bg-white/10 rounded-2xl" disabled={isUploading === 'hero3'}>
-                        {isUploading === 'hero3' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4 p-4 bg-primary/5 border border-primary/20 rounded-2xl">
-                  <Switch 
-                    id="carousel-guests" 
-                    checked={isCarouselEnabled} 
-                    onCheckedChange={setIsCarouselEnabled} 
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor="carousel-guests" className="text-[10px] font-black uppercase italic">ACTIVER LE CAROUSEL DES GUESTS</Label>
-                    <p className="text-[8px] text-muted-foreground uppercase font-bold">Affiche les photos des artistes dans le défilement d'accueil</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 pt-4 border-t border-white/5">
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-muted-foreground">LIEN BILLETTERIE</label>
-                    <Input value={ticketingInput} onChange={e => setTicketingInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-muted-foreground">Lien Teaser YouTube</label>
-                    <Input value={teaserInput} onChange={e => setTeaserInput(e.target.value)} className="bg-black border-white/10 h-14 rounded-2xl" />
-                  </div>
-                </div>
-              </div>
-              <Button onClick={handleSaveSettings} className="bg-primary text-white font-black text-[10px] uppercase h-14 px-8 rounded-2xl w-full">SAUVEGARDER LES MÉDIAS</Button>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="talents">
+          <TabsContent value="gallery">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
-                <h3 className="text-[11px] font-black uppercase mb-6 italic text-primary">AJOUTER UN GUEST</h3>
-                <form onSubmit={handleAddTalent} className="space-y-4">
-                  <Input required value={newTalent.name} onChange={e => setNewTalent({...newTalent, name: e.target.value})} placeholder="Nom de l'artiste" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newTalent.role} onChange={e => setNewTalent({...newTalent, role: e.target.value})} placeholder="Spécialité (ex: DJ, Styliste)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <select className="w-full bg-black border border-white/10 text-xs h-12 rounded-xl px-3 text-white" value={newTalent.category} onChange={e => setNewTalent({...newTalent, category: e.target.value})}>
-                    <option value="MUSIC">MUSIQUE</option><option value="CREATIVE">CRÉATIF</option><option value="DIGITAL">DIGITAL</option>
-                  </select>
+              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl h-fit backdrop-blur-xl">
+                <h3 className="text-[11px] font-black uppercase mb-8 italic flex items-center gap-3"><Images className="w-5 h-5 text-primary" /> Galerie</h3>
+                <form onSubmit={handleAddGalleryItem} className="space-y-4">
                   <div className="flex gap-2">
-                    <Input value={newTalent.imageUrl} onChange={e => setNewTalent({...newTalent, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
+                    <Input value={newGalleryItem.imageUrl} onChange={e => setNewGalleryItem({...newGalleryItem, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black/40 border-white/10 h-12 rounded-xl text-xs flex-1" />
                     <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewTalent({...newTalent, imageUrl: url}), 'talents')} />
-                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'talents'}>
-                        {isUploading === 'talents' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                      </Button>
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, url => setNewGalleryItem({...newGalleryItem, imageUrl: url}), 'gallery')} />
+                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'gallery'}><Upload className="w-4 h-4" /></Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-white font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER</Button>
+                  <Input value={newGalleryItem.description} onChange={e => setNewGalleryItem({...newGalleryItem, description: e.target.value})} placeholder="Légende" className="bg-black/40 border-white/10 h-12 rounded-xl text-xs italic" />
+                  <Button type="submit" className="w-full bg-primary text-white font-black h-12 rounded-xl text-[10px] italic">PUBLIER</Button>
                 </form>
               </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
+              <Card className="lg:col-span-2 bg-white/5 border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Guest</TableHead><TableHead className="px-6 text-[9px] uppercase">Catégorie</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="px-8">Image</TableHead><TableHead className="text-right px-8">Action</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {talents?.map((t) => (
-                      <TableRow key={t.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell className="px-6 py-4"><div className="text-[11px] font-black uppercase italic">{t.name}</div><div className="text-[9px] text-muted-foreground">{t.role}</div></TableCell>
-                        <TableCell className="px-6"><span className="text-[8px] border border-white/10 px-2 py-0.5 rounded-full font-black">{t.category}</span></TableCell>
-                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('talents', t.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="program">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="bg-white/5 border-white/10 text-white rounded-2xl p-6 h-fit">
-                <h3 className="text-[11px] font-black uppercase mb-6 italic text-secondary">AJOUTER À L'AGENDA</h3>
-                <form onSubmit={handleAddProgram} className="space-y-4">
-                  <Input required value={newProgram.time} onChange={e => setNewProgram({...newProgram, time: e.target.value})} placeholder="Heure (ex: 14:00)" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input required value={newProgram.title} onChange={e => setNewProgram({...newProgram, title: e.target.value})} placeholder="Titre de l'activité" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <Input value={newProgram.desc} onChange={e => setNewProgram({...newProgram, desc: e.target.value})} placeholder="Petite description" className="bg-black border-white/10 text-xs h-12 rounded-xl" />
-                  <div className="flex gap-2">
-                    <Input value={newProgram.imageUrl} onChange={e => setNewProgram({...newProgram, imageUrl: e.target.value})} placeholder="URL Image" className="bg-black border-white/10 text-[10px] h-12 rounded-xl flex-1" />
-                    <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={e => handleFileUpload(e, (url) => setNewProgram({...newProgram, imageUrl: url}), 'program')} />
-                      <Button type="button" size="icon" className="h-12 w-12 bg-white/10 rounded-xl" disabled={isUploading === 'program'}>
-                        {isUploading === 'program' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full bg-secondary text-black font-black text-[10px] uppercase h-12 rounded-xl">AJOUTER</Button>
-                </form>
-              </Card>
-              <Card className="lg:col-span-2 bg-white/5 border-white/10 text-white rounded-2xl overflow-hidden">
-                <Table>
-                  <TableHeader><TableRow><TableHead className="px-6 text-[9px] uppercase">Timing</TableHead><TableHead className="px-6 text-[9px] uppercase">Activité</TableHead><TableHead className="text-right px-6 text-[9px] uppercase">Action</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {programItems?.map((item) => (
+                    {galleryItems?.sort((a,b)=> b.createdAt.localeCompare(a.createdAt)).map(item => (
                       <TableRow key={item.id} className="border-white/5">
-                        <TableCell className="px-6 font-black text-primary text-[11px] italic">{item.time}</TableCell>
-                        <TableCell className="px-6 text-[11px] font-bold uppercase">{item.title}</TableCell>
-                        <TableCell className="text-right px-6"><Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => handleDeleteDoc('program', item.id)}><Trash className="w-3.5 h-3.5" /></Button></TableCell>
+                        <TableCell className="px-8 py-4">{item.imageUrl && <div className="w-20 h-12 relative overflow-hidden rounded-lg border border-white/10"><img src={item.imageUrl} className="w-full h-full object-cover" /></div>}</TableCell>
+                        <TableCell className="text-right px-8"><Button size="icon" variant="ghost" onClick={() => handleDeleteDoc('gallery', item.id)}><Trash className="w-3.5 h-3.5 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

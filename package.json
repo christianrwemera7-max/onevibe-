@@ -1,4 +1,3 @@
-
 {
   "name": "one-vibe-fest",
   "version": "1.0.0",
@@ -6,7 +5,7 @@
   "description": "Site officiel du festival ONE VIBE FEST - Kinshasa",
   "repository": {
     "type": "git",
-    "url": "https://github.com/christianrwemera7-max/onevibe-.git"
+    "url": "https://github.com/christianrwemera7-max/onevibefest.git"
   },
   "scripts": {
     "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev -p 9002",
@@ -52,7 +51,10 @@
     "recharts": "^2.15.0",
     "date-fns": "^3.6.0",
     "react-day-picker": "^8.10.1",
-    "cloudinary": "^2.5.1"
+    "cloudinary": "^2.5.1",
+    "genkit": "latest",
+    "@genkit-ai/google-genai": "latest",
+    "@genkit-ai/next": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

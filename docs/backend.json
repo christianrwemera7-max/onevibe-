@@ -70,23 +70,45 @@
       },
       "required": ["name", "price", "imageUrl"]
     },
+    "GalleryItem": {
+      "title": "Gallery Item",
+      "description": "Image pour la galerie Vibe Moments",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["imageUrl", "createdAt"]
+    },
+    "Sponsor": {
+      "title": "Festival Sponsor",
+      "description": "Partenaire officiel du festival",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "tier": { "type": "string", "enum": ["DIAMOND", "GOLD", "PARTNER"] }
+      },
+      "required": ["name", "logoUrl"]
+    },
     "FestivalSettings": {
       "title": "Festival Settings",
       "description": "Configurations globales de l'événement",
       "type": "object",
       "properties": {
-        "eventName": { "type": "string", "description": "Nom officiel de l'événement" },
-        "eventTagline": { "type": "string", "description": "Slogan ou description courte" },
-        "eventDate": { "type": "string", "description": "Date de l'événement (format ISO: YYYY-MM-DDTHH:MM:SS)" },
-        "eventLocation": { "type": "string", "description": "Lieu de l'événement" },
-        "heroImageUrl": { "type": "string" },
-        "heroImageUrl2": { "type": "string" },
-        "heroImageUrl3": { "type": "string" },
-        "globalBgUrl": { "type": "string", "description": "Image d'arrière-plan pour tout le site" },
-        "exposantsImg": { "type": "string", "description": "Image de présentation pour la page Stand" },
+        "eventName": { "type": "string" },
+        "eventTagline": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "eventDate": { "type": "string" },
+        "eventLocation": { "type": "string" },
+        "heroGifUrl": { "type": "string" },
+        "loadingGifUrl": { "type": "string" },
+        "spotVideoUrl": { "type": "string" },
+        "globalBgUrl": { "type": "string" },
+        "exposantsImg": { "type": "string" },
         "ticketingUrl": { "type": "string" },
         "teaserUrl": { "type": "string" },
-        "isCarouselEnabled": { "type": "boolean" },
         "instagramUrl": { "type": "string" },
         "twitterUrl": { "type": "string" },
         "facebookUrl": { "type": "string" },
@@ -108,31 +130,39 @@
   "firestore": {
     "/registrations/{registrationId}": {
       "schema": "Registration",
-      "description": "Inscriptions des participants, achats de pass et codes uniques"
+      "description": "Inscriptions"
     },
     "/talents/{talentId}": {
       "schema": "Talent",
-      "description": "Liste dynamique des talents affichés sur le site"
+      "description": "Line-up"
     },
     "/universes/{universeId}": {
       "schema": "Universe",
-      "description": "Liste dynamique des univers thématiques"
+      "description": "Univers thématiques"
     },
     "/program/{programId}": {
       "schema": "ProgramItem",
-      "description": "Liste dynamique de la programmation chronologique"
+      "description": "Programmation"
     },
     "/merch/{merchId}": {
       "schema": "MerchItem",
-      "description": "Articles de la boutique officielle du festival"
+      "description": "Boutique"
+    },
+    "/gallery/{galleryId}": {
+      "schema": "GalleryItem",
+      "description": "Galerie d'images"
+    },
+    "/sponsors/{sponsorId}": {
+      "schema": "Sponsor",
+      "description": "Liste des sponsors affichés sur le site"
     },
     "/settings/festival": {
       "schema": "FestivalSettings",
-      "description": "Paramètres généraux modifiables de l'événement"
+      "description": "Paramètres"
     },
     "/analytics/global": {
       "schema": "Analytics",
-      "description": "Compteurs globaux du site"
+      "description": "Stats"
     }
   }
 }

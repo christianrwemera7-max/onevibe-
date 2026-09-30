@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +5,7 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export function GlobalBackground() {
   const firestore = useFirestore();
@@ -22,36 +22,37 @@ export function GlobalBackground() {
   }, [firestore]);
   const { data: settings } = useDoc(settingsRef);
 
-  // L'accueil possède son propre système de carousel prioritaire
   if (!mounted || pathname === '/') return null;
 
   const bgUrl = settings?.globalBgUrl;
 
   return (
-    <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-black">
+    <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-background">
       <AnimatePresence mode="wait">
         {bgUrl ? (
           <motion.div
             key={bgUrl}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.25 }}
+            animate={{ opacity: 0.1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 2 }}
             className="absolute inset-0 w-full h-full"
           >
-            <img 
+            <Image 
               src={bgUrl} 
               alt="Background" 
-              className="w-full h-full object-cover grayscale brightness-50"
+              fill
+              className="object-cover grayscale brightness-[0.2]"
+              unoptimized={true}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
           </motion.div>
         ) : (
-          <div className="absolute inset-0 bg-neutral-950" />
+          <div className="absolute inset-0 bg-background" />
         )}
       </AnimatePresence>
-      <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[150px]" />
+      <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[200px]" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[200px]" />
     </div>
   );
 }

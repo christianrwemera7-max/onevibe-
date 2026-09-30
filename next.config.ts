@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -9,13 +8,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    // Résout l'erreur "Cross origin request detected" dans l'environnement Cloud Workstations
-    // et stabilise la connexion HMR (Hot Module Replacement)
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev',
-      '*.firebase-studio.dev',
-      '*.apphosting.adapter.run'
-    ]
+    // Suppression de allowedDevOrigins car il cause des erreurs sur Next.js 15
   },
   images: {
     remotePatterns: [
@@ -67,6 +60,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'media.giphy.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };

@@ -1,204 +1,166 @@
-
 "use client";
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Store, Zap, QrCode, ShieldCheck, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Store, CheckCircle2, QrCode, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, addDoc, doc } from 'firebase/firestore';
+import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
+import Link from 'next/link';
 
 export default function ExposantsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalStep, setModalStep] = useState<'FORM' | 'TICKET'>('FORM');
-  const [formData, setFormData] = useState({ name: '', phone: '' });
-  const [generatedTicket, setGeneratedTicket] = useState<string | null>(null);
-
-  const settingsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'settings', 'festival');
-  }, [firestore]);
-  const { data: settings } = useDoc(settingsRef);
+  const [modalStep, setModalStep] = useState<'FORM' | 'SUCCESS'>('FORM');
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
+  const [generatedId, setGeneratedId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const registrationsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'registrations');
   }, [firestore]);
 
-  const handleSubmitRegistration = (e: React.FormEvent) => {
+  const handleSubmitRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registrationsRef || !user) return;
+    if (!registrationsRef) return;
+    setIsSubmitting(true);
 
     const uniqueTicketId = `OVF-STAND-${Math.floor(100000 + Math.random() * 900000)}`;
     const submissionData = {
-      userId: user.uid,
+      userId: user?.uid || 'guest',
       name: formData.name,
-      email: user.email,
+      email: formData.email,
       phone: formData.phone,
       type: 'EXPOSITOR',
       ticketCode: uniqueTicketId,
       createdAt: new Date().toISOString()
     };
 
-    addDoc(registrationsRef, submissionData)
-      .then(() => {
-        setGeneratedTicket(uniqueTicketId);
-        setModalStep('TICKET');
-        toast({ title: "Demande envoyée !", description: "Votre dossier est en cours d'examen." });
-      })
-      .catch((error) => {
-        toast({ variant: "destructive", title: "Erreur", description: "Impossible d'envoyer la demande." });
-      });
+    try {
+      await addDoc(registrationsRef, submissionData);
+      setGeneratedId(uniqueTicketId);
+      setModalStep('SUCCESS');
+      toast({ title: "Candidature envoyée", description: "Notre équipe vous contactera bientôt." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'envoyer la demande." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const exposantsImg = settings?.exposantsImg;
-
   return (
-    <div className="pt-28 pb-16 bg-transparent min-h-screen relative z-10">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-            <div className="inline-block p-4 bg-secondary/10 rounded-xl border border-secondary/20">
-              <Store className="w-6 h-6 text-secondary" />
-            </div>
-            <h1 className="text-[22px] md:text-[28px] font-black tracking-tighter uppercase italic leading-tight text-white">
-              VOTRE MARQUE <br />
-              <span className="text-secondary">AU SOMMET</span>
-            </h1>
-            <p className="text-[12px] text-muted-foreground leading-relaxed italic opacity-80 max-w-lg">
-              Devenez exposant à {settings?.eventName || 'ONE VIBE FEST'} et connectez-vous avec des milliers de passionnés. Profitez d'un emplacement stratégique.
-            </p>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "VISIBILITÉ", value: "5000+", desc: "Public qualifié" },
-                { label: "ESPACE", value: "50+", desc: "Stands premium" }
-              ].map((stat, i) => (
-                <div key={i} className="p-6 bg-white/5 rounded-2xl md:rounded-[2rem] border border-white/5 shadow-xl">
-                  <div className="text-[18px] md:text-[22px] font-black text-white mb-1 italic">{stat.value}</div>
-                  <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">{stat.label}</div>
+    <div className="pt-32 pb-24 bg-black min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-xl w-full px-6 relative z-10">
+        <Link href="/explore" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors mb-8 italic">
+          <ArrowLeft className="w-4 h-4" /> Retour
+        </Link>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 md:p-14 backdrop-blur-3xl shadow-2xl"
+        >
+          {modalStep === 'FORM' ? (
+            <div className="space-y-10">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
+                  <Store className="w-8 h-8 text-primary" />
                 </div>
-              ))}
-            </div>
-
-            <Button 
-              onClick={() => setIsModalOpen(true)}
-              size="lg" 
-              className="h-14 px-10 text-[9px] font-black rounded-full bg-secondary text-black uppercase tracking-[0.2em] shadow-xl shadow-secondary/20 hover:scale-105 transition-all w-full sm:w-auto"
-            >
-              RÉSERVER MON STAND
-            </Button>
-          </motion.div>
-
-          <div className="relative aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl group bg-white/5">
-            {exposantsImg ? (
-              <Image 
-                src={exposantsImg} 
-                alt="Exposant" 
-                fill 
-                className="object-cover transition-all duration-700 group-hover:scale-105" 
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/5">
-                <Store className="w-10 h-10 text-white/10" />
+                <h1 className="text-[26px] font-black uppercase italic tracking-tighter text-white leading-tight">RÉSERVATION <br /><span className="text-primary">DE STAND</span></h1>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.3em] italic">Devenez partenaire officiel de l'édition 2027</p>
+                <div className="w-10 h-1 bg-primary/30 mx-auto rounded-full" />
               </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 p-6 bg-black/60 backdrop-blur-2xl rounded-2xl md:rounded-[2rem] border border-white/10">
-              <div className="flex items-center gap-3 mb-2">
-                <Zap className="w-4 h-4 text-secondary" />
-                <h3 className="text-[16px] font-black text-white uppercase italic">Impact VIBE</h3>
-              </div>
-              <p className="text-[9px] text-white/80 font-black uppercase tracking-widest leading-relaxed italic">Boostez votre business dans l'écosystème le plus dynamique de la capitale.</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-2xl">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.98 }} 
-              animate={{ opacity: 1, scale: 1 }} 
-              exit={{ opacity: 0, scale: 0.98 }} 
-              className="bg-neutral-900 border border-white/10 rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 max-w-lg w-full relative text-white shadow-2xl"
-            >
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 p-2 text-muted-foreground hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <form onSubmit={handleSubmitRegistration} className="space-y-6">
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[9px] uppercase font-black tracking-[0.2em] text-white/40 ml-1">NOM DE LA MARQUE / SOCIÉTÉ</label>
+                    <Input 
+                      placeholder="Ex: KIN VIBE STUDIO" 
+                      required 
+                      className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl focus:border-primary/50 transition-all italic font-medium"
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] uppercase font-black tracking-[0.2em] text-white/40 ml-1">E-MAIL DE CONTACT</label>
+                    <Input 
+                      placeholder="business@vibe.cd" 
+                      required 
+                      type="email"
+                      className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl focus:border-primary/50 transition-all italic font-medium"
+                      value={formData.email}
+                      onChange={e => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] uppercase font-black tracking-[0.2em] text-white/40 ml-1">NUMÉRO WHATSAPP</label>
+                    <Input 
+                      placeholder="+243 ..." 
+                      required 
+                      type="tel"
+                      className="bg-black/50 border-white/10 h-14 text-sm rounded-2xl focus:border-primary/50 transition-all italic font-medium"
+                      value={formData.phone}
+                      onChange={e => setFormData({...formData, phone: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  disabled={isSubmitting}
+                  type="submit" 
+                  className="w-full h-14 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 border-none mt-6 hover:scale-[1.02] transition-all"
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  {isSubmitting ? "TRANSMISSION..." : "SOUMETTRE MA DEMANDE"}
+                </Button>
+                <p className="text-center text-[8px] text-white/20 uppercase font-black tracking-widest italic">Notre équipe commerciale reviendra vers vous sous 48h.</p>
+              </form>
+            </div>
+          ) : (
+            <div className="text-center space-y-10 py-6">
+              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto text-green-500 border border-green-500/20">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
               
-              {modalStep === 'FORM' ? (
-                <div className="space-y-8">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-secondary/20">
-                      <Store className="w-6 h-6 text-secondary" />
-                    </div>
-                    <h3 className="text-[20px] font-black uppercase italic">DOSSIER STAND</h3>
-                    <p className="text-[8px] text-muted-foreground uppercase tracking-[0.3em] font-black mt-1 italic">Rejoignez l'élite</p>
-                  </div>
+              <div className="space-y-3">
+                <h2 className="text-[22px] font-black uppercase italic text-white tracking-tighter">DEMANDE ENREGISTRÉE</h2>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">RÉFÉRENCE DOSSIER : <span className="text-primary">{generatedId}</span></p>
+              </div>
 
-                  <form onSubmit={handleSubmitRegistration} className="space-y-4">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-[8px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 block ml-1">NOM DE MARQUE</label>
-                        <Input 
-                          placeholder="Ex: KIN VIBE SHOP" 
-                          required 
-                          className="bg-black border-white/10 h-12 text-sm rounded-xl"
-                          value={formData.name}
-                          onChange={e => setFormData({...formData, name: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[8px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 block ml-1">NUMÉRO WHATSAPP</label>
-                        <Input 
-                          placeholder="+243 ..." 
-                          required 
-                          type="tel"
-                          className="bg-black border-white/10 h-12 text-sm rounded-xl"
-                          value={formData.phone}
-                          onChange={e => setFormData({...formData, phone: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full h-14 bg-secondary text-black font-black rounded-xl text-[9px] uppercase tracking-widest shadow-lg shadow-secondary/10 transition-all mt-4">
-                      ENVOYER LA CANDIDATURE
-                    </Button>
-                  </form>
-                </div>
-              ) : (
-                <div className="text-center space-y-8">
-                  <div className="w-20 h-20 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto text-secondary border border-secondary/20">
-                    <ShieldCheck className="w-10 h-10" />
+              <div className="bg-black/40 border border-white/5 p-8 rounded-[2rem] space-y-6 text-left relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all" />
+                <div className="flex items-center gap-6">
+                  <QrCode className="w-14 h-14 text-white/10 shrink-0" />
+                  <div className="space-y-2">
+                    <div className="text-[16px] font-black uppercase tracking-tight text-white italic">{formData.name}</div>
+                    <div className="font-mono text-primary text-[11px] font-black tracking-widest">{generatedId}</div>
                   </div>
-                  <h3 className="text-[20px] font-black uppercase italic">DOSSIER REÇU</h3>
-                  
-                  <div className="bg-white text-black p-8 rounded-[2rem] space-y-6 text-left relative overflow-hidden shadow-xl">
-                    <div className="border-b border-dashed border-neutral-200 pb-6">
-                      <div className="text-[8px] font-black text-secondary uppercase mb-1">STAND CONFIRMATION ID</div>
-                      <div className="text-[18px] font-black uppercase tracking-tighter italic">{formData.name}</div>
-                    </div>
-                    <div className="flex items-center gap-5">
-                      <QrCode className="w-16 h-16 text-black" />
-                      <div className="space-y-1.5">
-                        <div className="font-mono text-secondary text-[12px] font-black tracking-tighter">{generatedTicket}</div>
-                        <div className="text-[8px] uppercase font-black text-muted-foreground leading-tight">CONTACT SOUS 48H</div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button onClick={() => setIsModalOpen(false)} className="w-full h-14 bg-white/5 border border-white/10 text-white font-black rounded-xl uppercase text-[9px] tracking-widest hover:bg-white/10 transition-colors">FERMER LE DOSSIER</Button>
                 </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  onClick={() => setModalStep('FORM')} 
+                  variant="ghost"
+                  className="text-white/30 hover:text-white font-black rounded-2xl uppercase text-[10px] tracking-widest italic h-12"
+                >
+                  NOUVELLE DEMANDE
+                </Button>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }

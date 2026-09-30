@@ -1,25 +1,29 @@
-
 @import "tailwindcss";
 
 @theme {
+  /* DA FINALE : NOIR PRESTIGE, ROSE FESTIVAL, BLEU ÉLECTRIQUE */
   --color-background: hsl(240 10% 3.9%);
-  --color-foreground: hsl(0 0% 98%);
-  --color-primary: hsl(320 100% 50%);
+  --color-foreground: hsl(0 0% 100%);
+  
+  --color-primary: hsl(333 100% 55%); /* ROSE VIBE */
   --color-primary-foreground: hsl(0 0% 100%);
-  --color-secondary: hsl(180 100% 50%);
+  
+  --color-secondary: hsl(210 100% 50%); /* BLEU ÉLECTRIQUE */
   --color-secondary-foreground: hsl(240 10% 3.9%);
-  --color-muted: hsl(240 3.7% 15.9%);
-  --color-muted-foreground: hsl(240 5% 64.9%);
-  --color-accent: hsl(260 100% 60%);
+  
+  --color-accent: hsl(210 100% 50%); /* BLEU ACCENT */
   --color-accent-foreground: hsl(0 0% 98%);
+  
   --color-destructive: hsl(0 62.8% 30.6%);
   --color-destructive-foreground: hsl(0 0% 98%);
+  
   --color-border: hsl(240 3.7% 15.9%);
   --color-input: hsl(240 3.7% 15.9%);
-  --color-ring: hsl(320 100% 50%);
-  --radius-lg: 1rem;
-  --radius-md: calc(1rem - 2px);
-  --radius-sm: calc(1rem - 4px);
+  --color-ring: hsl(333 100% 55%);
+  
+  --radius-lg: 1.5rem;
+  --radius-md: 1rem;
+  --radius-sm: 0.5rem;
 }
 
 @layer base {
@@ -42,11 +46,28 @@
 }
 
 .vibe-gradient {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent), var(--color-secondary));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), #000);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #fff, #888);
+  background: linear-gradient(135deg, #fff, var(--color-primary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+@keyframes scroll-vibe {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+.animate-scroll-vibe {
+  animation: scroll-vibe 30s linear infinite;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
